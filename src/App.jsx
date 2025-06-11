@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import "./App.css";
 import ToDoForm from "./AddTask";
 import ToDo from "./Task";
-import axios from "axios";
+import axios from 'axios';
 
 const TASKS_STORAGE_KEY = "tasks-list-project-web";
 const WEATHER_API_KEY = "c7616da4b68205c2f3ae73df2c31d177";
