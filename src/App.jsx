@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./App.css";
 import ToDoForm from "./AddTask";
 import ToDo from "./Task";
@@ -14,47 +14,46 @@ function App() {
       const res = await fetch(
         "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=rub"
       );
+      if (!res.ok) throw new Error("Network response not ok");
       const data = await res.json();
       setBtcPrice(data.bitcoin.rub);
     } catch (error) {
       console.error("Ошибка при загрузке курса BTC:", error);
+      setBtcPrice(null);
     }
   };
 
-  // Обновление кота
+  // Обновление котика с рандомными размерами
   const getNewCat = () => {
     const width = 300 + Math.floor(Math.random() * 100);
     const height = 200 + Math.floor(Math.random() * 100);
     setCatUrl(`https://placekitten.com/${width}/${height}`);
   };
 
-  // Загрузка при запуске
   useEffect(() => {
     fetchBTC();
   }, []);
 
-  // Работа с задачами
   const addTask = (userInput) => {
-    if (userInput) {
-      const newItem = {
-        id: Math.random().toString(36).substr(2, 9),
-        task: userInput,
-        complete: false,
-      };
-      setTodos([...todos, newItem]);
-    }
+    if (!userInput.trim()) return; // игнорируем пустые
+    const newItem = {
+      id: Math.random().toString(36).substr(2, 9),
+      task: userInput.trim(),
+      complete: false,
+    };
+    setTodos((prev) => [...prev, newItem]);
   };
 
   const removeTask = (id) => {
-    setTodos([...todos.filter((todo) => todo.id !== id)]);
+    setTodos((prev) => prev.filter((todo) => todo.id !== id));
   };
 
   const handleToggle = (id) => {
-    setTodos([
-      ...todos.map((task) =>
+    setTodos((prev) =>
+      prev.map((task) =>
         task.id === id ? { ...task, complete: !task.complete } : task
-      ),
-    ]);
+      )
+    );
   };
 
   return (
@@ -72,7 +71,7 @@ function App() {
         {btcPrice !== null ? (
           <p>1 BTC = {btcPrice.toLocaleString()} ₽</p>
         ) : (
-          <p>Загрузка...</p>
+          <p>Не удалось загрузить курс</p>
         )}
         <button onClick={fetchBTC}>Обновить курс</button>
       </div>
@@ -96,3 +95,4 @@ function App() {
 }
 
 export default App;
+
