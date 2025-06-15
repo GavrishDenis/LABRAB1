@@ -2,20 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom/client';
 import './App.css';
 
-// Инициализация экрана загрузки
-const rootElement = document.getElementById('root');
-const loadingScreen = document.getElementById('loading-screen');
-
-const hideLoadingScreen = () => {
-  if (loadingScreen) {
-    loadingScreen.style.opacity = '0';
-    setTimeout(() => {
-      loadingScreen.remove();
-    }, 500);
-  }
-};
-
-const App = ({ onLoaded }) => {
+const App = () => {
   const [animeQuote, setAnimeQuote] = useState(null);
   const [catFact, setCatFact] = useState(null);
   const [loading, setLoading] = useState({
@@ -26,13 +13,25 @@ const App = ({ onLoaded }) => {
     quote: null,
     fact: null
   });
-  const [isAppReady, setIsAppReady] = useState(false);
+  const [showContent, setShowContent] = useState(false);
+  const loadingScreenRef = useRef(null);
 
   // Refs для отмены запросов
   const abortControllers = useRef({
     quote: null,
     fact: null
   });
+
+  // Скрытие экрана загрузки
+  const hideLoadingScreen = () => {
+    setShowContent(true);
+    if (loadingScreenRef.current) {
+      loadingScreenRef.current.style.opacity = '0';
+      setTimeout(() => {
+        loadingScreenRef.current.remove();
+      }, 500);
+    }
+  };
 
   // Универсальный fetch с таймаутом
   const fetchData = async (type) => {
@@ -54,7 +53,6 @@ const App = ({ onLoaded }) => {
     };
 
     try {
-      // Таймаут 5 секунд
       const timeout = setTimeout(() => {
         controller.abort();
       }, 5000);
@@ -70,11 +68,6 @@ const App = ({ onLoaded }) => {
       }
 
       const data = await response.json();
-
-      if (!data) {
-        throw new Error('Invalid data format');
-      }
-
       type === 'quote' ? setAnimeQuote(data) : setCatFact(data);
     } catch (err) {
       if (err.name !== 'AbortError') {
@@ -85,13 +78,6 @@ const App = ({ onLoaded }) => {
     }
   };
 
-  // Проверка готовности приложения
-  useEffect(() => {
-    if (isAppReady && animeQuote && catFact && onLoaded) {
-      onLoaded();
-    }
-  }, [isAppReady, animeQuote, catFact, onLoaded]);
-
   // Загрузка данных при монтировании
   useEffect(() => {
     const loadAllData = async () => {
@@ -99,19 +85,28 @@ const App = ({ onLoaded }) => {
         fetchData('quote'),
         fetchData('fact')
       ]);
-      setIsAppReady(true);
       hideLoadingScreen();
     };
 
     loadAllData();
 
     return () => {
-      // Отмена всех запросов при размонтировании
       Object.values(abortControllers.current).forEach(controller => {
         if (controller) controller.abort();
       });
     };
   }, []);
+
+  if (!showContent) {
+    return (
+      <div id="loading-screen" ref={loadingScreenRef}>
+        <div className="loader">
+          <div className="spinner"></div>
+          <p>Loading application...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="app">
@@ -121,10 +116,8 @@ const App = ({ onLoaded }) => {
       </header>
 
       <div className="content">
-        {/* Блок с цитатой из аниме */}
         <section className="quote-section">
           <h2>Random Anime Quote</h2>
-          
           {loading.quote ? (
             <div className="loader">
               <div className="spinner"></div>
@@ -138,7 +131,6 @@ const App = ({ onLoaded }) => {
                   <button onClick={() => fetchData('quote')}>Retry</button>
                 </div>
               )}
-              
               {animeQuote && (
                 <div className="quote-card">
                   <blockquote>"{animeQuote.quote}"</blockquote>
@@ -150,7 +142,6 @@ const App = ({ onLoaded }) => {
               )}
             </>
           )}
-          
           <button 
             onClick={() => fetchData('quote')}
             disabled={loading.quote}
@@ -159,10 +150,8 @@ const App = ({ onLoaded }) => {
           </button>
         </section>
 
-        {/* Блок с фактом о котах */}
         <section className="fact-section">
           <h2>Random Cat Fact</h2>
-          
           {loading.fact ? (
             <div className="loader">
               <div className="spinner"></div>
@@ -176,7 +165,6 @@ const App = ({ onLoaded }) => {
                   <button onClick={() => fetchData('fact')}>Retry</button>
                 </div>
               )}
-              
               {catFact && (
                 <div className="fact-card">
                   <p className="fact-text">{catFact.fact}</p>
@@ -185,7 +173,6 @@ const App = ({ onLoaded }) => {
               )}
             </>
           )}
-          
           <button 
             onClick={() => fetchData('fact')}
             disabled={loading.fact}
@@ -199,11 +186,11 @@ const App = ({ onLoaded }) => {
 };
 
 // Создаем корень приложения
-const root = ReactDOM.createRoot(rootElement);
+const root = ReactDOM.createRoot(document.getElementById('root'));
 
 // Рендерим приложение
 root.render(
   <React.StrictMode>
-    <App onLoaded={hideLoadingScreen} />
+    <App />
   </React.StrictMode>
 );
