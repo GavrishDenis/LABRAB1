@@ -20,24 +20,37 @@ function App() {
     }
   });
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        // Fetch random dog image
-        const dogResponse = await axios.get("https://dog.ceo/api/breeds/image/random");
-        setDogImage(dogResponse.data.message);
-        
-        // Fetch random activity
-        const activityResponse = await axios.get("https://bored-api.appbrewery.com/random");
-        setActivity(activityResponse.data);
-        
-        setError("");
-      } catch (err) {
-        setError(err.message || "Ошибка загрузки данных");
-      } finally {
-        setLoading(false);
+  const fetchData = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      // Fetch random dog image
+      const dogResponse = await axios.get("https://dog.ceo/api/breeds/image/random", {
+        timeout: 10000
+      });
+      if (dogResponse.data.status !== "success") {
+        throw new Error("Failed to load dog image");
       }
+      setDogImage(dogResponse.data.message);
+      
+      // Fetch random activity
+      const activityResponse = await axios.get("https://bored-api.appbrewery.com/random", {
+        timeout: 10000
+      });
+      if (!activityResponse.data.activity) {
+        throw new Error("Failed to load activity");
+      }
+      setActivity(activityResponse.data);
+      
+    } catch (err) {
+      setError(err.message || "Network error. Please check your connection.");
+      console.error("API Error:", err);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
     fetchData();
   }, []);
 
@@ -72,42 +85,50 @@ function App() {
       {loading && (
         <div className="loading-overlay">
           <div className="spinner"></div>
-          <p>Загрузка данных...</p>
+          <p>Loading data...</p>
         </div>
       )}
 
       <div className="app-header">
-        <h1 className="app-title">Мои задачи</h1>
+        <h1 className="app-title">My Tasks</h1>
         <div className="task-counter">{todos.length}</div>
       </div>
 
-      {!loading && error && (
+      {error && (
         <div className="error-message">
           <span>⚠️</span> {error}
+          <button 
+            onClick={fetchData} 
+            className="retry-button"
+          >
+            Retry
+          </button>
         </div>
       )}
 
       {!loading && !error && (
         <div className="info-panel">
-          {dogImage && (
-            <div className="dog-panel">
+          <div className="dog-panel">
+            <h3>Random Dog</h3>
+            {dogImage && (
               <img 
                 src={dogImage} 
                 alt="Random dog" 
                 className="dog-image"
-                style={{ maxWidth: '100%', borderRadius: '8px' }}
               />
-            </div>
-          )}
+            )}
+          </div>
 
-          {activity && (
-            <div className="activity-panel">
-              <h3>Random Activity</h3>
-              <p><strong>Type:</strong> {activity.type}</p>
-              <p><strong>Activity:</strong> {activity.activity}</p>
-              <p><strong>Participants:</strong> {activity.participants}</p>
-            </div>
-          )}
+          <div className="activity-panel">
+            <h3>Random Activity</h3>
+            {activity && (
+              <>
+                <p><strong>{activity.activity}</strong></p>
+                <p>Type: {activity.type}</p>
+                <p>Participants: {activity.participants}</p>
+              </>
+            )}
+          </div>
         </div>
       )}
 
@@ -117,8 +138,8 @@ function App() {
         <div className="todo-list">
           {todos.length === 0 ? (
             <div className="empty-state">
-              <p>У вас нет задач</p>
-              <p>Добавьте первую задачу выше</p>
+              <p>You have no tasks</p>
+              <p>Add your first task above</p>
             </div>
           ) : (
             todos.map((todo) => (
