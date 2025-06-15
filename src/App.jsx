@@ -1,12 +1,26 @@
 import React, { useState, useEffect, useRef } from 'react';
+import ReactDOM from 'react-dom/client';
 import './App.css';
+
+// Инициализация экрана загрузки
+const rootElement = document.getElementById('root');
+const loadingScreen = document.getElementById('loading-screen');
+
+const hideLoadingScreen = () => {
+  if (loadingScreen) {
+    loadingScreen.style.opacity = '0';
+    setTimeout(() => {
+      loadingScreen.remove();
+    }, 500);
+  }
+};
 
 const App = () => {
   const [animeQuote, setAnimeQuote] = useState(null);
   const [catFact, setCatFact] = useState(null);
   const [loading, setLoading] = useState({
-    quote: false,
-    fact: false
+    quote: true,
+    fact: true
   });
   const [error, setError] = useState({
     quote: null,
@@ -72,8 +86,16 @@ const App = () => {
 
   // Загрузка данных при монтировании
   useEffect(() => {
-    fetchData('quote');
-    fetchData('fact');
+    const loadAllData = async () => {
+      await Promise.all([
+        fetchData('quote'),
+        fetchData('fact')
+      ]);
+      // Когда все данные загружены, скрываем экран загрузки
+      hideLoadingScreen();
+    };
+
+    loadAllData();
 
     return () => {
       // Отмена всех запросов при размонтировании
@@ -168,4 +190,12 @@ const App = () => {
   );
 };
 
-export default App;
+// Создаем корень приложения
+const root = ReactDOM.createRoot(rootElement);
+
+// Рендерим приложение
+root.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
