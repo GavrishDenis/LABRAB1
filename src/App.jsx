@@ -4,13 +4,36 @@ import ToDoForm from "./AddTask";
 import "./App.css";
 
 function App() {
-  // Состояние для факта о коте
-  const [catFact, setCatFact] = useState("");
-  // Состояние для цены биткоина
-  const [btcPrice, setBtcPrice] = useState(null);
+  // Инициализация состояний с чтением из localStorage
+  const [catFact, setCatFact] = useState(() => {
+    const saved = localStorage.getItem("catFact");
+    return saved || "";
+  });
 
-  // Состояние для задач
-  const [todos, setTodos] = useState([]);
+  const [btcPrice, setBtcPrice] = useState(() => {
+    const saved = localStorage.getItem("btcPrice");
+    return saved ? parseFloat(saved) : null;
+  });
+
+  const [todos, setTodos] = useState(() => {
+    const saved = localStorage.getItem("todos");
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  // Сохранение данных в localStorage при их изменении
+  useEffect(() => {
+    localStorage.setItem("catFact", catFact);
+  }, [catFact]);
+
+  useEffect(() => {
+    if (btcPrice !== null) {
+      localStorage.setItem("btcPrice", btcPrice.toString());
+    }
+  }, [btcPrice]);
+
+  useEffect(() => {
+    localStorage.setItem("todos", JSON.stringify(todos));
+  }, [todos]);
 
   // Получить факт о коте
   const fetchCatFact = async () => {
@@ -24,7 +47,7 @@ function App() {
     }
   };
 
-  // Получить цену биткоина (в рублях) из CoinGecko
+  // Получить цену биткоина
   const fetchBtcPrice = async () => {
     try {
       const res = await fetch(
@@ -34,18 +57,28 @@ function App() {
       setBtcPrice(json.bitcoin.rub);
     } catch (error) {
       console.error("Ошибка загрузки цены BTC:", error);
-      setBtcPrice(null);
+      // Пробуем альтернативный API если основной не работает
+      try {
+        const backupRes = await fetch(
+          "https://api.binance.com/api/v3/ticker/price?symbol=BTCRUB"
+        );
+        const backupJson = await backupRes.json();
+        setBtcPrice(parseFloat(backupJson.price));
+      } catch (backupError) {
+        console.error("Ошибка загрузки из резервного API:", backupError);
+        setBtcPrice(null);
+      }
     }
   };
 
   // Загружаем данные при монтировании компонента
   useEffect(() => {
-    fetchCatFact();
-    fetchBtcPrice();
+    // Загружаем только если нет сохраненных данных
+    if (!catFact) fetchCatFact();
+    if (btcPrice === null) fetchBtcPrice();
   }, []);
 
   // Обработчики для задач
-
   const addTask = (userInput) => {
     if (userInput.trim() === "") return;
     const newItem = {
@@ -76,7 +109,7 @@ function App() {
 
       <section className="cat-section">
         <h2>Факт о котиках</h2>
-        <p>{catFact}</p>
+        <p>{catFact || "Загрузка факта..."}</p>
         <button onClick={fetchCatFact}>Получить новый факт</button>
       </section>
 
@@ -87,7 +120,7 @@ function App() {
             {btcPrice.toLocaleString("ru-RU")} ₽
           </p>
         ) : (
-          <p>Загрузка...</p>
+          <p>Не удалось загрузить цену</p>
         )}
         <button onClick={fetchBtcPrice}>Обновить цену</button>
       </section>
@@ -111,4 +144,3 @@ function App() {
 }
 
 export default App;
-
