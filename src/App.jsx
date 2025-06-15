@@ -1,86 +1,83 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import "./App.css";
 import ToDoForm from "./AddTask";
 import ToDo from "./Task";
 
 function App() {
-  const [catFact, setCatFact] = useState("");
-  const [btcPrice, setBtcPrice] = useState("");
+  const [catUrl, setCatUrl] = useState("https://placekitten.com/300/200");
+  const [btcPrice, setBtcPrice] = useState(null);
   const [todos, setTodos] = useState([]);
 
-  // Загрузка факта о коте
-  const fetchCatFact = async () => {
+  // Получение курса BTC
+  const fetchBTC = async () => {
     try {
-      const response = await fetch("https://catfact.ninja/fact");
-      const json = await response.json();
-      setCatFact(json.fact);
-    } catch (error) {
-      console.error("Ошибка загрузки факта о котике:", error);
-    }
-  };
-
-  // Загрузка цены BTC в рублях
-  const fetchBtcPrice = async () => {
-    try {
-      const response = await fetch(
-        "https://min-api.cryptocompare.com/data/price?fsym=BTC&tsyms=RUB"
+      const res = await fetch(
+        "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=rub"
       );
-      const json = await response.json();
-      setBtcPrice(json.RUB);
+      const data = await res.json();
+      setBtcPrice(data.bitcoin.rub);
     } catch (error) {
-      console.error("Ошибка загрузки курса BTC:", error);
+      console.error("Ошибка при загрузке курса BTC:", error);
     }
   };
 
+  // Обновление кота
+  const getNewCat = () => {
+    const width = 300 + Math.floor(Math.random() * 100);
+    const height = 200 + Math.floor(Math.random() * 100);
+    setCatUrl(`https://placekitten.com/${width}/${height}`);
+  };
+
+  // Загрузка при запуске
   useEffect(() => {
-    fetchCatFact();
-    fetchBtcPrice();
+    fetchBTC();
   }, []);
 
-  // Добавление задачи
+  // Работа с задачами
   const addTask = (userInput) => {
     if (userInput) {
       const newItem = {
         id: Math.random().toString(36).substr(2, 9),
         task: userInput,
         complete: false,
-        key: Date.now(),
       };
       setTodos([...todos, newItem]);
     }
   };
 
-  // Удаление задачи
   const removeTask = (id) => {
     setTodos([...todos.filter((todo) => todo.id !== id)]);
   };
 
-  // Переключение статуса задачи
   const handleToggle = (id) => {
     setTodos([
       ...todos.map((task) =>
-        task.id === id ? { ...task, complete: !task.complete } : { ...task }
+        task.id === id ? { ...task, complete: !task.complete } : task
       ),
     ]);
   };
 
   return (
     <div className="App">
-      <h1>🐾 Котофакт и курс BTC</h1>
+      <h1>🐱 Кот и курс Bitcoin</h1>
 
-      <div className="section">
-        <h2>Факт о котике</h2>
-        <p>{catFact}</p>
-        <button onClick={fetchCatFact}>Получить новый факт</button>
+      <div className="block">
+        <h2>Кот дня</h2>
+        <img src={catUrl} alt="Котик" className="cat-img" />
+        <button onClick={getNewCat}>Показать нового кота</button>
       </div>
 
-      <div className="section">
-        <h2>Курс биткоина (BTC → RUB)</h2>
-        <p>{btcPrice ? `${btcPrice} ₽` : "Загрузка..."}</p>
-        <button onClick={fetchBtcPrice}>Обновить курс</button>
+      <div className="block">
+        <h2>Курс BTC (₽)</h2>
+        {btcPrice !== null ? (
+          <p>1 BTC = {btcPrice.toLocaleString()} ₽</p>
+        ) : (
+          <p>Загрузка...</p>
+        )}
+        <button onClick={fetchBTC}>Обновить курс</button>
       </div>
 
-      <div className="section">
+      <div className="block">
         <header>
           <h2>📝 Список задач: {todos.length}</h2>
         </header>
