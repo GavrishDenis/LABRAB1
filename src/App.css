@@ -2,225 +2,122 @@
 :root {
   --primary: #4a76a8;
   --secondary: #5d9cec;
-  --accent: #ff6b6b;
+  --error: #d32f2f;
   --text: #2c3e50;
   --light: #f5f7fa;
   --gray: #e0e6ed;
-  --dark-gray: #8492a6;
 }
 
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  font-family: 'Segoe UI', 'Roboto', sans-serif;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 body {
   background-color: var(--light);
   color: var(--text);
   line-height: 1.6;
+  padding: 20px;
 }
 
 .app {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 20px;
 }
 
-/* Заголовок */
 .header {
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 40px;
 }
 
 .header h1 {
   color: var(--primary);
-  margin-bottom: 10px;
 }
 
-.quote {
-  font-style: italic;
-  color: var(--dark-gray);
-}
-
-.quote span {
-  display: block;
-  margin-top: 5px;
-  font-size: 0.9em;
-}
-
-/* Контент */
-.content {
-  display: flex;
-  flex-direction: column;
+/* Блоки с API */
+.api-blocks {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 30px;
 }
 
-.api-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 20px;
-}
-
-.card {
+.api-block {
   background: white;
-  border-radius: 10px;
   padding: 20px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   text-align: center;
 }
 
-.card h2 {
-  color: var(--primary);
-  margin-bottom: 15px;
+/* Изображения */
+.image-container {
+  margin: 20px 0;
 }
 
-.card img {
-  width: 100%;
-  max-height: 250px;
-  object-fit: cover;
+.image-container img {
+  max-width: 100%;
+  height: auto;
   border-radius: 8px;
-  margin-bottom: 15px;
+  max-height: 300px;
+  object-fit: cover;
 }
 
-.card button {
-  background: var(--secondary);
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 5px;
-  cursor: pointer;
-  margin-top: 10px;
-  transition: background 0.3s;
-}
-
-.card button:hover {
-  background: var(--primary);
-}
-
-/* Секция задач */
-.todo-section {
-  background: white;
-  border-radius: 10px;
-  padding: 20px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.task-form {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 20px;
-}
-
-.task-form input {
-  flex: 1;
-  padding: 10px;
-  border: 1px solid var(--gray);
-  border-radius: 5px;
-  font-size: 16px;
-}
-
-.task-form button {
-  background: var(--primary);
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 5px;
-  cursor: pointer;
-}
-
-.task-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.task {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 15px;
+/* Карточка активности */
+.activity-card {
+  margin: 20px 0;
+  padding: 15px;
   background: var(--light);
   border-radius: 8px;
 }
 
-.task.completed {
-  opacity: 0.7;
+.activity-card h3 {
+  color: var(--primary);
+  margin-bottom: 10px;
 }
 
-.task.completed span {
-  text-decoration: line-through;
-}
-
-.task label {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex: 1;
-}
-
-.task-date {
-  font-size: 0.8em;
-  color: var(--dark-gray);
-  margin: 0 10px;
-}
-
-.delete-btn {
-  background: none;
+/* Кнопки */
+button {
+  background: var(--primary);
+  color: white;
   border: none;
-  color: var(--accent);
-  font-size: 1.5em;
+  padding: 10px 20px;
+  border-radius: 4px;
   cursor: pointer;
-  padding: 0 5px;
+  font-size: 16px;
+  transition: background 0.3s;
 }
 
-.empty {
-  text-align: center;
-  color: var(--dark-gray);
-  padding: 20px;
+button:hover {
+  background: var(--secondary);
 }
 
-/* Загрузчик */
+button:disabled {
+  background: var(--gray);
+  cursor: not-allowed;
+}
+
+/* Сообщения */
+.loader, .error {
+  margin: 15px 0;
+  padding: 10px;
+  border-radius: 4px;
+}
+
 .loader {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 50vh;
+  color: var(--text);
+  background: var(--gray);
 }
 
-.spinner {
-  width: 50px;
-  height: 50px;
-  border: 5px solid rgba(74, 118, 168, 0.2);
-  border-radius: 50%;
-  border-top-color: var(--primary);
-  animation: spin 1s linear infinite;
-  margin-bottom: 20px;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
+.error {
+  color: white;
+  background: var(--error);
 }
 
 /* Адаптивность */
 @media (max-width: 768px) {
-  .api-cards {
+  .api-blocks {
     grid-template-columns: 1fr;
-  }
-  
-  .task-form {
-    flex-direction: column;
-  }
-  
-  .task {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
-  }
-  
-  .task-date {
-    margin-left: 0;
   }
 }
