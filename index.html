@@ -1,15 +1,89 @@
 <!DOCTYPE html>
-<html lang="ru">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Случайные факты о кошках и цитаты из аниме с котиками 🐱" />
-    <title>Котики и Цитаты</title>
-    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
-  </head>
-  <body>
-    <noscript>Включите JavaScript для работы приложения.</noscript>
-    <div id="root"></div>
-  </body>
-</html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Anime Quotes & Cat Facts</title>
+  <meta name="description" content="Get random anime quotes and interesting cat facts">
+  
+  <!-- Favicon (можно заменить на свой) -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐱</text></svg>">
+  
+  <!-- Предзагрузка шрифтов -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <!-- Предзагрузка API -->
+  <link rel="preconnect" href="https://animechan.xyz">
+  <link rel="preconnect" href="https://catfact.ninja">
+  
+  <style>
+    /* Базовые стили для отображения до загрузки React */
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background-color: #f8f8ff;
+      color: #333;
+    }
+    
+    #root {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .loading-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(135deg, #6a5acd, #ff69b4);
+      color: white;
+      z-index: 1000;
+    }
+    
+    .loading-spinner {
+      width: 50px;
+      height: 50px;
+      border: 5px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s ease-in-out infinite;
+      margin-bottom: 20px;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <!-- Экран загрузки, который исчезнет после инициализации React -->
+  <div id="loading-screen" class="loading-screen">
+    <div class="loading-spinner"></div>
+    <h2>Loading Awesome Content...</h2>
+  </div>
 
+  <!-- Контейнер для React-приложения -->
+  <div id="root"></div>
+
+  <!-- Скрипт для скрытия экрана загрузки -->
+  <script>
+    window.addEventListener('load', function() {
+      setTimeout(function() {
+        const loadingScreen = document.getElementById('loading-screen');
+        if (loadingScreen) {
+          loadingScreen.style.opacity = '0';
+          setTimeout(() => loadingScreen.remove(), 500);
+        }
+      }, 500);
+    });
+  </script>
+</body>
+</html>
