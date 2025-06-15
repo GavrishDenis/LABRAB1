@@ -15,7 +15,7 @@ const hideLoadingScreen = () => {
   }
 };
 
-const App = () => {
+const App = ({ onLoaded }) => {
   const [animeQuote, setAnimeQuote] = useState(null);
   const [catFact, setCatFact] = useState(null);
   const [loading, setLoading] = useState({
@@ -26,6 +26,7 @@ const App = () => {
     quote: null,
     fact: null
   });
+  const [isAppReady, setIsAppReady] = useState(false);
 
   // Refs для отмены запросов
   const abortControllers = useRef({
@@ -84,6 +85,13 @@ const App = () => {
     }
   };
 
+  // Проверка готовности приложения
+  useEffect(() => {
+    if (isAppReady && animeQuote && catFact && onLoaded) {
+      onLoaded();
+    }
+  }, [isAppReady, animeQuote, catFact, onLoaded]);
+
   // Загрузка данных при монтировании
   useEffect(() => {
     const loadAllData = async () => {
@@ -91,7 +99,7 @@ const App = () => {
         fetchData('quote'),
         fetchData('fact')
       ]);
-      // Когда все данные загружены, скрываем экран загрузки
+      setIsAppReady(true);
       hideLoadingScreen();
     };
 
@@ -196,6 +204,6 @@ const root = ReactDOM.createRoot(rootElement);
 // Рендерим приложение
 root.render(
   <React.StrictMode>
-    <App />
+    <App onLoaded={hideLoadingScreen} />
   </React.StrictMode>
 );
