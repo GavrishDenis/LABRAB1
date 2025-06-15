@@ -1,109 +1,107 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 
-const TASKS_STORAGE_KEY = "tasks-list-project-web-v2";
+const TASKS_STORAGE_KEY = "tasks-list-v3";
+const DOG_API_URL = "https://api.thedogapi.com/v1/images/search";
+const ACTIVITY_API_URL = "https://api.api-ninjas.com/v1/bored?type=recreational";
 
-// Надежные fallback-данные
-const DEFAULT_DATA = {
-  dogImage: "https://images.dog.ceo/breeds/retriever-golden/n02099601_100.jpg",
-  activity: {
-    activity: "Learn a new programming language",
-    type: "education",
-    participants: 1,
-    key: "default-activity"
-  }
-};
-
-// Утилита для надежного получения данных
-const fetchData = async (url, options = {}) => {
-  try {
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        'Accept': 'application/json',
-        ...options.headers
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error(`Failed to fetch ${url}:`, error);
-    throw error;
-  }
+// Локальные fallback-данные
+const LOCAL_DATA = {
+  dogImages: [
+    'https://cdn.pixabay.com/photo/2016/12/13/05/15/puppy-1903313_1280.jpg',
+    'https://cdn.pixabay.com/photo/2017/09/25/13/12/dog-2785074_1280.jpg',
+    'https://cdn.pixabay.com/photo/2016/02/19/15/46/dog-1210559_1280.jpg'
+  ],
+  activities: [
+    { activity: "Read a programming book", type: "education", participants: 1 },
+    { activity: "Go for a 30-minute walk", type: "recreational", participants: 1 },
+    { activity: "Cook a new recipe", type: "cooking", participants: 1 }
+  ]
 };
 
 function App() {
-  const [dogImage, setDogImage] = useState(DEFAULT_DATA.dogImage);
-  const [activity, setActivity] = useState(DEFAULT_DATA.activity);
+  const [dogImage, setDogImage] = useState(LOCAL_DATA.dogImages[0]);
+  const [activity, setActivity] = useState(LOCAL_DATA.activities[0]);
   const [loading, setLoading] = useState(true);
-  const [networkStatus, setNetworkStatus] = useState('loading'); // 'loading', 'success', 'error'
+  const [networkStatus, setNetworkStatus] = useState('loading');
   const [todos, setTodos] = useState(() => {
-    try {
-      const saved = localStorage.getItem(TASKS_STORAGE_KEY);
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
+    const saved = localStorage.getItem(TASKS_STORAGE_KEY);
+    return saved ? JSON.parse(saved) : [];
   });
 
-  const loadAppData = async () => {
+  // Улучшенный fetch с обработкой ошибок
+  const safeFetch = async (url, options) => {
+    try {
+      const response = await fetch(url, options);
+      if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
+      return await response.json();
+    } catch (error) {
+      console.error(`Fetch failed for ${url}:`, error);
+      throw error;
+    }
+  };
+
+  const loadData = async () => {
     setLoading(true);
     setNetworkStatus('loading');
     
     try {
-      // Параллельная загрузка данных
+      // Параллельная загрузка данных с таймаутом
       const results = await Promise.allSettled([
-        fetchData("https://dog.ceo/api/breeds/image/random"),
-        fetchData("https://www.boredapi.com/api/activity")
+        Promise.race([
+          safeFetch(DOG_API_URL),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
+        ]),
+        Promise.race([
+          safeFetch(ACTIVITY_API_URL),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
+        ])
       ]);
 
-      // Обработка данных собаки
-      if (results[0].status === 'fulfilled' && results[0].value.status === 'success') {
-        setDogImage(results[0].value.message);
+      // Обработка изображения собаки
+      if (results[0].status === 'fulfilled') {
+        setDogImage(results[0].value[0]?.url || getRandomLocalImage());
       } else {
-        console.warn('Using default dog image');
+        setDogImage(getRandomLocalImage());
       }
 
       // Обработка активности
-      if (results[1].status === 'fulfilled' && results[1].value.activity) {
-        setActivity(results[1].value);
+      if (results[1].status === 'fulfilled') {
+        setActivity(results[1].value || getRandomLocalActivity());
       } else {
-        console.warn('Using default activity');
+        setActivity(getRandomLocalActivity());
       }
 
       setNetworkStatus('success');
     } catch (error) {
-      console.error('App data loading error:', error);
+      console.error('Failed to load data:', error);
       setNetworkStatus('error');
+      // Используем локальные данные при ошибке
+      setDogImage(getRandomLocalImage());
+      setActivity(getRandomLocalActivity());
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    loadAppData();
-    
-    // Проверка соединения и обновление данных
-    const onlineHandler = () => {
-      if (navigator.onLine && networkStatus === 'error') {
-        loadAppData();
-      }
-    };
+  const getRandomLocalImage = () => {
+    return LOCAL_DATA.dogImages[Math.floor(Math.random() * LOCAL_DATA.dogImages.length)];
+  };
 
-    window.addEventListener('online', onlineHandler);
-    return () => window.removeEventListener('online', onlineHandler);
+  const getRandomLocalActivity = () => {
+    return LOCAL_DATA.activities[Math.floor(Math.random() * LOCAL_DATA.activities.length)];
+  };
+
+  useEffect(() => {
+    loadData();
+    
+    // Обновляем данные каждые 5 минут
+    const interval = setInterval(loadData, 300000);
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
-    try {
-      localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(todos));
-    } catch (error) {
-      console.error('Failed to save tasks:', error);
-    }
+    localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(todos));
   }, [todos]);
 
   const addTask = (text) => {
@@ -111,7 +109,7 @@ function App() {
     if (!trimmed) return;
     
     const newTask = {
-      id: crypto.randomUUID(),
+      id: Date.now().toString(),
       task: trimmed,
       complete: false,
       createdAt: new Date().toISOString()
@@ -130,11 +128,13 @@ function App() {
     ));
   };
 
-  const handleRetry = () => {
+  const handleRefresh = () => {
     if (navigator.onLine) {
-      loadAppData();
+      loadData();
     } else {
-      alert('You are offline. Please check your internet connection.');
+      alert('You are offline. Using local data.');
+      setDogImage(getRandomLocalImage());
+      setActivity(getRandomLocalActivity());
     }
   };
 
@@ -143,144 +143,123 @@ function App() {
       {loading && (
         <div className="loading-overlay">
           <div className="spinner"></div>
-          <p>Loading application data...</p>
+          <p>Loading application...</p>
         </div>
       )}
 
       <header className="app-header">
-        <h1 className="app-title">My Task Manager</h1>
-        <div className="header-info">
-          <span className="task-counter">{todos.length} tasks</span>
+        <h1>My Task Manager</h1>
+        <div className="status-indicator">
           <span className={`network-status ${networkStatus}`}>
             {networkStatus === 'loading' ? '🔄' : 
-             networkStatus === 'success' ? '✅' : '⚠️'}
+             networkStatus === 'success' ? '✅ Online' : '⚠️ Offline'}
           </span>
+          <span className="task-count">{todos.length} tasks</span>
         </div>
       </header>
 
-      {networkStatus === 'error' && (
-        <div className="network-alert">
-          <p>Content may not be up to date. Check your connection.</p>
-          <button onClick={handleRetry} className="refresh-button">
-            Refresh Data
-          </button>
+      <section className="content-section">
+        <div className="api-cards">
+          <div className="card dog-card">
+            <h2>Daily Dog</h2>
+            <div className="image-container">
+              <img 
+                src={dogImage} 
+                alt="Random dog" 
+                onError={(e) => {
+                  e.target.src = getRandomLocalImage();
+                  console.warn('Image failed to load, using fallback');
+                }}
+              />
+            </div>
+            <button onClick={handleRefresh} className="refresh-btn">
+              New Image
+            </button>
+          </div>
+
+          <div className="card activity-card">
+            <h2>Suggested Activity</h2>
+            <div className="activity-content">
+              <h3>{activity.activity}</h3>
+              <div className="activity-meta">
+                <span>Type: {activity.type}</span>
+                <span>Participants: {activity.participants}</span>
+              </div>
+            </div>
+            <button onClick={handleRefresh} className="refresh-btn">
+              New Activity
+            </button>
+          </div>
         </div>
-      )}
 
-      <section className="api-data-section">
-        <article className="dog-card">
-          <h2>Daily Dog</h2>
-          <div className="image-wrapper">
-            <img 
-              src={dogImage} 
-              alt="Random dog" 
-              onError={(e) => {
-                e.target.src = DEFAULT_DATA.dogImage;
-                console.warn('Failed to load dog image, using fallback');
-              }}
-            />
-          </div>
-          <button 
-            onClick={() => loadAppData()} 
-            className="secondary-button"
-          >
-            New Dog
-          </button>
-        </article>
-
-        <article className="activity-card">
-          <h2>Suggested Activity</h2>
-          <div className="activity-content">
-            <h3>{activity.activity}</h3>
-            <div className="activity-meta">
-              <span>Type: {activity.type}</span>
-              <span>People: {activity.participants}</span>
-            </div>
-          </div>
-          <button 
-            onClick={() => loadAppData()} 
-            className="secondary-button"
-          >
-            New Activity
-          </button>
-        </article>
-      </section>
-
-      <section className="todo-section">
-        <ToDoForm addTask={addTask} />
-        
-        <div className="todo-list-container">
-          {todos.length === 0 ? (
-            <div className="empty-state">
-              <p>No tasks yet</p>
-              <p>Add your first task above</p>
-            </div>
-          ) : (
-            <ul className="todo-list">
-              {todos.map(todo => (
-                <ToDoItem
+        <div className="todo-section">
+          <TaskForm onSubmit={addTask} />
+          
+          <div className="todo-list">
+            {todos.length === 0 ? (
+              <div className="empty-state">
+                <p>No tasks yet</p>
+                <p>Add your first task above</p>
+              </div>
+            ) : (
+              todos.map(todo => (
+                <TaskItem
                   key={todo.id}
-                  todo={todo}
+                  task={todo}
                   onToggle={toggleTask}
-                  onRemove={removeTask}
+                  onDelete={removeTask}
                 />
-              ))}
-            </ul>
-          )}
+              ))
+            )}
+          </div>
         </div>
       </section>
     </div>
   );
 }
 
-// Компонент формы
-const ToDoForm = ({ addTask }) => {
-  const [inputValue, setInputValue] = useState('');
+// Компоненты вынесены для лучшей читаемости
+const TaskForm = ({ onSubmit }) => {
+  const [input, setInput] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    addTask(inputValue);
-    setInputValue('');
+    onSubmit(input);
+    setInput('');
   };
 
   return (
-    <form onSubmit={handleSubmit} className="todo-form">
+    <form onSubmit={handleSubmit} className="task-form">
       <input
         type="text"
-        value={inputValue}
-        onChange={(e) => setInputValue(e.target.value)}
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
         placeholder="What needs to be done?"
-        className="todo-input"
         required
       />
-      <button type="submit" className="primary-button">
-        Add Task
-      </button>
+      <button type="submit">Add Task</button>
     </form>
   );
 };
 
-// Компонент элемента задачи
-const ToDoItem = ({ todo, onToggle, onRemove }) => {
+const TaskItem = ({ task, onToggle, onDelete }) => {
   return (
-    <li className={`todo-item ${todo.complete ? 'completed' : ''}`}>
-      <label className="todo-label">
+    <div className={`task-item ${task.complete ? 'completed' : ''}`}>
+      <label>
         <input
           type="checkbox"
-          checked={todo.complete}
-          onChange={() => onToggle(todo.id)}
-          className="todo-checkbox"
+          checked={task.complete}
+          onChange={() => onToggle(task.id)}
         />
-        <span className="todo-text">{todo.task}</span>
+        <span>{task.task}</span>
       </label>
       <button 
-        onClick={() => onRemove(todo.id)} 
-        className="delete-button"
+        onClick={() => onDelete(task.id)}
         aria-label="Delete task"
       >
         &times;
       </button>
-    </li>
+    </div>
   );
 };
 
