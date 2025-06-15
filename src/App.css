@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import ReactDOM from 'react-dom/client';
 import './App.css';
 
 const App = () => {
@@ -14,7 +13,6 @@ const App = () => {
     fact: null
   });
   const [showContent, setShowContent] = useState(false);
-  const loadingScreenRef = useRef(null);
 
   const abortControllers = useRef({
     quote: null,
@@ -22,7 +20,6 @@ const App = () => {
   });
 
   const fetchData = async (type) => {
-    // Отменяем предыдущий запрос
     if (abortControllers.current[type]) {
       abortControllers.current[type].abort();
     }
@@ -162,41 +159,4 @@ const App = () => {
   );
 };
 
-// Добавляем стили для loading-screen в CSS
-const style = document.createElement('style');
-style.textContent = `
-  .loading-screen {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background: white;
-    z-index: 1000;
-    transition: opacity 0.5s;
-  }
-`;
-document.head.appendChild(style);
-
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
-  .loading-screen {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: white;
-  z-index: 1000;
-  transition: opacity 0.5s;
-}
+export default App;
