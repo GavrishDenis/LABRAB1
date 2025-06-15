@@ -1,9 +1,10 @@
 :root {
   --primary: #4a76a8;
-  --secondary: #5d9cec;
+  --primary-dark: #3a56d4;
   --error: #ff3333;
   --light: #f5f7fa;
   --dark: #2c3e50;
+  --gray: #e0e6ed;
 }
 
 * {
@@ -28,10 +29,20 @@ body {
 header {
   text-align: center;
   margin-bottom: 40px;
-  padding: 20px;
+  padding: 30px;
   background-color: var(--primary);
   color: white;
-  border-radius: 8px;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+header h1 {
+  margin-bottom: 10px;
+}
+
+.subtitle {
+  opacity: 0.9;
+  font-size: 0.9em;
 }
 
 .content {
@@ -42,70 +53,97 @@ header {
 
 section {
   background: white;
-  padding: 20px;
-  border-radius: 8px;
+  padding: 25px;
+  border-radius: 10px;
   box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
 
 h2 {
   color: var(--primary);
   margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--gray);
 }
 
 .image-wrapper {
   margin: 20px 0;
+  min-height: 250px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--light);
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 img {
   max-width: 100%;
-  height: auto;
-  border-radius: 8px;
   max-height: 300px;
-  object-fit: cover;
+  object-fit: contain;
 }
 
 .activity-card {
-  padding: 15px;
+  padding: 20px;
   background: var(--light);
   border-radius: 8px;
   margin: 20px 0;
+}
+
+.activity-card h3 {
+  color: var(--primary-dark);
+  margin-bottom: 10px;
 }
 
 button {
   background: var(--primary);
   color: white;
   border: none;
-  padding: 10px 20px;
-  border-radius: 4px;
+  padding: 12px 20px;
+  border-radius: 6px;
   cursor: pointer;
   font-size: 16px;
   transition: all 0.3s;
   width: 100%;
+  margin-top: 10px;
 }
 
 button:hover {
-  background: var(--secondary);
+  background: var(--primary-dark);
   transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+button:disabled {
+  background: var(--gray);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 .loader, .error {
-  padding: 10px;
-  margin: 10px 0;
-  border-radius: 4px;
+  padding: 15px;
+  margin: 15px 0;
+  border-radius: 8px;
   text-align: center;
 }
 
 .loader {
   background: rgba(0,0,0,0.05);
+  color: var(--dark);
 }
 
 .error {
-  background: var(--error);
-  color: white;
+  background: rgba(255,51,51,0.1);
+  border-left: 4px solid var(--error);
+  color: var(--error);
 }
 
 @media (max-width: 768px) {
   .content {
     grid-template-columns: 1fr;
+  }
+  
+  header {
+    padding: 20px;
   }
 }
