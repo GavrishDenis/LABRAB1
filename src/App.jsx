@@ -8,13 +8,13 @@ function App() {
   const [btcPrice, setBtcPrice] = useState(null);
   const [todos, setTodos] = useState([]);
 
-  // Получение курса BTC
+  // Функция получения курса BTC в рублях через CoinGecko API
   const fetchBTC = async () => {
     try {
       const res = await fetch(
         "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=rub"
       );
-      if (!res.ok) throw new Error("Network response not ok");
+      if (!res.ok) throw new Error("Ошибка сети");
       const data = await res.json();
       setBtcPrice(data.bitcoin.rub);
     } catch (error) {
@@ -23,7 +23,7 @@ function App() {
     }
   };
 
-  // Обновление котика с рандомными размерами
+  // Функция для смены котика на случайное изображение с placekitten.com
   const getNewCat = () => {
     const width = 300 + Math.floor(Math.random() * 100);
     const height = 200 + Math.floor(Math.random() * 100);
@@ -34,8 +34,9 @@ function App() {
     fetchBTC();
   }, []);
 
+  // Добавление новой задачи
   const addTask = (userInput) => {
-    if (!userInput.trim()) return; // игнорируем пустые
+    if (!userInput.trim()) return;
     const newItem = {
       id: Math.random().toString(36).substr(2, 9),
       task: userInput.trim(),
@@ -44,10 +45,12 @@ function App() {
     setTodos((prev) => [...prev, newItem]);
   };
 
+  // Удаление задачи по id
   const removeTask = (id) => {
     setTodos((prev) => prev.filter((todo) => todo.id !== id));
   };
 
+  // Переключение статуса задачи (выполнена/не выполнена)
   const handleToggle = (id) => {
     setTodos((prev) =>
       prev.map((task) =>
