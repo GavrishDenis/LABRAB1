@@ -18,140 +18,108 @@ body {
   background-color: var(--light);
   color: var(--dark);
   line-height: 1.6;
+  padding: 20px;
 }
 
 .app {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 20px;
 }
 
 header {
   text-align: center;
   margin-bottom: 40px;
-  padding: 30px;
+  padding: 20px;
   background-color: var(--primary);
   color: white;
-  border-radius: 10px;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  border-radius: 8px;
 }
 
 header h1 {
   margin-bottom: 10px;
-  font-size: 2.2rem;
-}
-
-.subtitle {
-  opacity: 0.9;
-  font-size: 1.1rem;
 }
 
 .content {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 30px;
+  gap: 20px;
 }
 
 section {
   background: white;
-  padding: 25px;
-  border-radius: 10px;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 h2 {
   color: var(--primary);
-  margin-bottom: 20px;
+  margin-bottom: 15px;
   padding-bottom: 10px;
-  border-bottom: 2px solid var(--gray);
-  font-size: 1.5rem;
+  border-bottom: 1px solid var(--gray);
 }
 
 .image-wrapper {
-  margin: 20px 0;
-  min-height: 250px;
+  margin: 15px 0;
+  min-height: 200px;
   display: flex;
   align-items: center;
   justify-content: center;
   background-color: var(--light);
-  border-radius: 8px;
-  overflow: hidden;
+  border-radius: 4px;
 }
 
 img {
   max-width: 100%;
-  max-height: 300px;
-  object-fit: contain;
+  max-height: 250px;
+  border-radius: 4px;
 }
 
 .activity-card {
-  padding: 20px;
-  background: var(--light);
-  border-radius: 8px;
-  margin: 20px 0;
+  margin: 15px 0;
+  padding: 15px;
+  background-color: var(--light);
+  border-radius: 4px;
 }
 
 .activity-card h3 {
+  margin-bottom: 10px;
   color: var(--primary-dark);
-  margin-bottom: 15px;
-  font-size: 1.3rem;
-}
-
-.activity-details {
-  margin-top: 15px;
-}
-
-.activity-details p {
-  margin-bottom: 8px;
-}
-
-.activity-details span {
-  font-weight: 600;
-  color: var(--primary);
 }
 
 button {
   background: var(--primary);
   color: white;
   border: none;
-  padding: 12px 20px;
-  border-radius: 6px;
+  padding: 10px 15px;
+  border-radius: 4px;
   cursor: pointer;
-  font-size: 1rem;
-  transition: all 0.3s;
-  width: 100%;
-  margin-top: 10px;
-  font-weight: 500;
+  transition: background 0.3s;
+  font-size: 14px;
 }
 
 button:hover {
   background: var(--primary-dark);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
 button:disabled {
   background: var(--gray);
   cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
 }
 
 .loader {
-  padding: 20px;
-  margin: 20px 0;
-  border-radius: 8px;
   text-align: center;
-  background: rgba(0,0,0,0.03);
+  padding: 20px;
+  margin: 15px 0;
 }
 
 .spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid rgba(74, 118, 168, 0.2);
+  width: 30px;
+  height: 30px;
+  border: 3px solid rgba(74, 118, 168, 0.2);
   border-radius: 50%;
   border-top-color: var(--primary);
-  margin: 0 auto 15px;
+  margin: 0 auto 10px;
   animation: spin 1s linear infinite;
 }
 
@@ -160,30 +128,24 @@ button:disabled {
 }
 
 .error {
-  padding: 15px;
-  margin: 15px 0;
-  border-radius: 8px;
-  text-align: center;
-  background: rgba(255,51,51,0.1);
-  border-left: 4px solid var(--error);
+  background-color: rgba(255, 51, 51, 0.1);
+  border-left: 3px solid var(--error);
+  padding: 10px;
+  margin: 10px 0;
   color: var(--error);
 }
 
-.error p:first-child {
-  font-weight: 600;
-  margin-bottom: 5px;
+.error button {
+  margin-top: 8px;
+  background: var(--error);
+}
+
+.error button:hover {
+  background: #e60000;
 }
 
 @media (max-width: 768px) {
   .content {
     grid-template-columns: 1fr;
-  }
-  
-  header {
-    padding: 20px;
-  }
-  
-  header h1 {
-    font-size: 1.8rem;
   }
 }
