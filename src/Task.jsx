@@ -2,10 +2,10 @@ import React from "react";
 
 const ToDo = ({ todo, toggleTask, removeTask }) => {
   return (
-    <div key={todo.id} className="item-todo">
+    <div className="item-todo">
       <div
-        onClick={() => toggleTask(todo.id)}
         className={todo.complete ? "item-text strike" : "item-text"}
+        onClick={() => toggleTask(todo.id)}
       >
         {todo.task}
       </div>
