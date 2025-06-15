@@ -3,88 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Приложение с курсом биткоина и фактами о котах">
-  <title>Криптовалюта и котики</title>
-  <style>
-    /* Базовые стили для fallback контента */
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      padding: 20px;
-      background-color: #f8f8ff;
-      color: #333;
-    }
-    
-    #root {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-    
-    .no-js-message {
-      max-width: 800px;
-      margin: 50px auto;
-      padding: 30px;
-      background: white;
-      border-radius: 10px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      text-align: center;
-    }
-    
-    .no-js-message h2 {
-      color: #6a5acd;
-    }
-    
-    .api-fallback {
-      margin-top: 30px;
-      padding: 20px;
-      background: #f0f0f0;
-      border-radius: 8px;
-    }
-  </style>
+  <title>Курс биткоина и факты о котах</title>
 </head>
 <body>
-  <!-- Контейнер для React-приложения -->
-  <div id="root">
-    <noscript>
-      <div class="no-js-message">
-        <h2>Для работы приложения требуется JavaScript</h2>
-        <p>Пожалуйста, включите JavaScript в настройках вашего браузера</p>
-        
-        <!-- Fallback-контент для SEO и пользователей без JS -->
-        <div class="api-fallback">
-          <h3>Курс Биткоина (BTC/RUB):</h3>
-          <p>Загружается... (требуется JavaScript)</p>
-          
-          <h3>Случайный факт о котах:</h3>
-          <p>Загружается... (требуется JavaScript)</p>
-        </div>
-      </div>
-    </noscript>
-  </div>
-
-  <!-- Скрипт для обработки состояния загрузки -->
-  <script>
-    // Показываем сообщение если React не загрузился за 5 секунд
-    setTimeout(function() {
-      var rootElement = document.getElementById('root');
-      if (rootElement && rootElement.children.length === 1 && rootElement.children[0].tagName === 'NOSCRIPT') {
-        var fallback = document.createElement('div');
-        fallback.className = 'no-js-message';
-        fallback.innerHTML = `
-          <h2>Проблема с загрузкой приложения</h2>
-          <p>Попробуйте перезагрузить страницу или проверьте подключение к интернету</p>
-          <div class="api-fallback">
-            <h3>Прямые ссылки на API:</h3>
-            <ul>
-              <li><a href="https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=rub" target="_blank">Курс Биткоина (JSON)</a></li>
-              <li><a href="https://meowfacts.herokuapp.com/" target="_blank">Факты о котах (JSON)</a></li>
-            </ul>
-          </div>
-        `;
-        rootElement.appendChild(fallback);
-      }
-    }, 5000);
-  </script>
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
 </body>
 </html>
