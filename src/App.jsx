@@ -2,47 +2,59 @@ import React, { useEffect, useState } from "react";
 import "./App.css";
 
 function App() {
-  const [idea, setIdea] = useState("Загрузка...");
+  const [quote, setQuote] = useState("Загрузка...");
   const [catUrl, setCatUrl] = useState("");
+  const [mode, setMode] = useState("cat"); // "cat" или "anime"
 
-  const fetchIdea = async () => {
+  const fetchQuote = async () => {
     try {
-      const response = await fetch("https://www.boredapi.com/api/activity");
-      if (!response.ok) {
-        throw new Error("API недоступен");
+      let response, data;
+      if (mode === "cat") {
+        response = await fetch("https://catfact.ninja/fact");
+        data = await response.json();
+        setQuote(data.fact);
+      } else {
+        response = await fetch("https://animechan.xyz/api/random");
+        data = await response.json();
+        setQuote(`"${data.quote}" — ${data.character} (${data.anime})`);
       }
-      const data = await response.json();
-      setIdea(data.activity);
     } catch (error) {
-      setIdea("Скучно? Но котик всегда поднимет настроение 🐱");
+      setQuote("Что-то пошло не так. Проверь подключение.");
     }
   };
 
   const fetchCat = () => {
-    // Генерация случайного изображения с Unsplash
-    const url = `https://source.unsplash.com/300x300/?cat&sig=${Math.floor(
-      Math.random() * 1000
-    )}`;
+    const url = `https://source.unsplash.com/300x300/?cat&sig=${Math.floor(Math.random() * 1000)}`;
     setCatUrl(url);
   };
 
-  const handleNewIdea = () => {
-    fetchIdea();
+  const handleClick = () => {
+    fetchQuote();
     fetchCat();
   };
 
+  const handleModeChange = (e) => {
+    setMode(e.target.value);
+  };
+
   useEffect(() => {
-    handleNewIdea(); // загрузить идею и кота при старте
-  }, []);
+    handleClick();
+  }, [mode]);
 
   return (
     <div className="app">
-      <h1>Чем заняться?</h1>
-      <p className="idea">{idea}</p>
+      <h1>{mode === "cat" ? "Факт о кошках" : "Цитата из аниме"}</h1>
+      <div className="controls">
+        <select onChange={handleModeChange} value={mode}>
+          <option value="cat">Факт о кошках</option>
+          <option value="anime">Цитата из аниме</option>
+        </select>
+        <button className="btn" onClick={handleClick}>
+          Получить новую
+        </button>
+      </div>
+      <p className="quote">{quote}</p>
       <img className="cat" src={catUrl} alt="Котик" />
-      <button className="btn" onClick={handleNewIdea}>
-        Получить новую идею 🧠
-      </button>
     </div>
   );
 }
