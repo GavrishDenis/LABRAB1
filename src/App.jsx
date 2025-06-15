@@ -1,106 +1,99 @@
 import React, { useState, useEffect } from "react";
+import "./App.css";
 import ToDoForm from "./AddTask";
 import ToDo from "./Task";
-import "./App.css";
 
 function App() {
-  const [mode, setMode] = useState("cat");
-  const [data, setData] = useState("Загрузка...");
-  const [imageUrl, setImageUrl] = useState("");
-
+  const [catFact, setCatFact] = useState("");
+  const [btcPrice, setBtcPrice] = useState("");
   const [todos, setTodos] = useState([]);
 
-  const handleModeChange = (e) => setMode(e.target.value);
+  // Загрузка факта о коте
+  const fetchCatFact = async () => {
+    try {
+      const response = await fetch("https://catfact.ninja/fact");
+      const json = await response.json();
+      setCatFact(json.fact);
+    } catch (error) {
+      console.error("Ошибка загрузки факта о котике:", error);
+    }
+  };
 
-  // Добавить задачу
+  // Загрузка цены BTC в рублях
+  const fetchBtcPrice = async () => {
+    try {
+      const response = await fetch(
+        "https://min-api.cryptocompare.com/data/price?fsym=BTC&tsyms=RUB"
+      );
+      const json = await response.json();
+      setBtcPrice(json.RUB);
+    } catch (error) {
+      console.error("Ошибка загрузки курса BTC:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchCatFact();
+    fetchBtcPrice();
+  }, []);
+
+  // Добавление задачи
   const addTask = (userInput) => {
     if (userInput) {
       const newItem = {
         id: Math.random().toString(36).substr(2, 9),
-        key: Date.now().toString(),
         task: userInput,
         complete: false,
+        key: Date.now(),
       };
       setTodos([...todos, newItem]);
     }
   };
 
-  // Удалить задачу
+  // Удаление задачи
   const removeTask = (id) => {
-    setTodos(todos.filter((todo) => todo.id !== id));
+    setTodos([...todos.filter((todo) => todo.id !== id)]);
   };
 
-  // Переключить статус задачи
+  // Переключение статуса задачи
   const handleToggle = (id) => {
-    setTodos(
-      todos.map((task) =>
-        task.id === id ? { ...task, complete: !task.complete } : task
-      )
-    );
+    setTodos([
+      ...todos.map((task) =>
+        task.id === id ? { ...task, complete: !task.complete } : { ...task }
+      ),
+    ]);
   };
-
-  // Получить данные с API
-  const fetchData = async () => {
-    try {
-      if (mode === "cat") {
-        const response = await fetch("https://meowfacts.herokuapp.com/");
-        const json = await response.json();
-        setData(json.data[0]);
-        setImageUrl(
-          `https://source.unsplash.com/300x300/?cat&sig=${Math.floor(
-            Math.random() * 1000
-          )}`
-        );
-      } else {
-        const response = await fetch(
-          "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=rub"
-        );
-        const json = await response.json();
-        setData(`1 BTC = ${json.bitcoin.rub.toLocaleString("ru-RU")} ₽`);
-        setImageUrl("https://cryptologos.cc/logos/bitcoin-btc-logo.png");
-      }
-    } catch (error) {
-      setData("Ошибка при получении данных.");
-      setImageUrl("");
-    }
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, [mode]);
 
   return (
-    <div className="app">
-      <h1>{mode === "cat" ? "Факт о кошках" : "Курс Биткойна"}</h1>
+    <div className="App">
+      <h1>🐾 Котофакт и курс BTC</h1>
 
-      <div className="controls">
-        <select onChange={handleModeChange} value={mode}>
-          <option value="cat">Кошачий факт</option>
-          <option value="bitcoin">Цена Биткойна</option>
-        </select>
-        <button className="btn" onClick={fetchData}>
-          Обновить
-        </button>
+      <div className="section">
+        <h2>Факт о котике</h2>
+        <p>{catFact}</p>
+        <button onClick={fetchCatFact}>Получить новый факт</button>
       </div>
 
-      <div className="task">
-        <p className="quote">{data}</p>
-        {imageUrl && <img className="cat" src={imageUrl} alt="Изображение" />}
+      <div className="section">
+        <h2>Курс биткоина (BTC → RUB)</h2>
+        <p>{btcPrice ? `${btcPrice} ₽` : "Загрузка..."}</p>
+        <button onClick={fetchBtcPrice}>Обновить курс</button>
       </div>
 
-      <header>
-        <h1 className="list-header">Список задач: {todos.length}</h1>
-      </header>
-
-      <ToDoForm addTask={addTask} />
-      {todos.map((todo) => (
-        <ToDo
-          todo={todo}
-          key={todo.id}
-          toggleTask={handleToggle}
-          removeTask={removeTask}
-        />
-      ))}
+      <div className="section">
+        <header>
+          <h2>📝 Список задач: {todos.length}</h2>
+        </header>
+        <ToDoForm addTask={addTask} />
+        {todos.map((todo) => (
+          <ToDo
+            todo={todo}
+            key={todo.id}
+            toggleTask={handleToggle}
+            removeTask={removeTask}
+          />
+        ))}
+      </div>
     </div>
   );
 }
