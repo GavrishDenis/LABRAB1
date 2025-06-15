@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 
+// Российский прокси-сервер для обхода CORS
+const RUSSIAN_PROXY = 'https://cors-anywhere.herokuapp.com/';
+
 const App = () => {
-  // Состояния для данных API
   const [shibeImage, setShibeImage] = useState('');
   const [activity, setActivity] = useState(null);
   const [loading, setLoading] = useState({
@@ -14,13 +16,17 @@ const App = () => {
     activity: null
   });
 
-  // 1. Загрузка изображения сиба-ину
+  // 1. Загрузка изображения через прокси
   const fetchShibe = async () => {
     try {
       setLoading(prev => ({ ...prev, shibe: true }));
       setError(prev => ({ ...prev, shibe: null }));
       
-      const response = await fetch('https://shibe.online/api/shibes?count=1');
+      const response = await fetch(`${RUSSIAN_PROXY}https://shibe.online/api/shibes?count=1`, {
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      });
       
       if (!response.ok) throw new Error('Ошибка загрузки изображения');
       
@@ -28,20 +34,19 @@ const App = () => {
       setShibeImage(data[0]);
     } catch (err) {
       setError(prev => ({ ...prev, shibe: err.message }));
-      // Fallback изображение
       setShibeImage('https://cdn.shibe.online/shibes/1.jpg');
     } finally {
       setLoading(prev => ({ ...prev, shibe: false }));
     }
   };
 
-  // 2. Загрузка случайной активности
+  // 2. Загрузка активности через прокси
   const fetchActivity = async () => {
     try {
       setLoading(prev => ({ ...prev, activity: true }));
       setError(prev => ({ ...prev, activity: null }));
       
-      const response = await fetch('https://www.boredapi.com/api/activity');
+      const response = await fetch(`${RUSSIAN_PROXY}https://www.boredapi.com/api/activity`);
       
       if (!response.ok) throw new Error('Ошибка загрузки активности');
       
@@ -49,9 +54,8 @@ const App = () => {
       setActivity(data);
     } catch (err) {
       setError(prev => ({ ...prev, activity: err.message }));
-      // Fallback активность
       setActivity({
-        activity: "Read a book",
+        activity: "Почитать книгу",
         type: "education",
         participants: 1
       });
@@ -60,7 +64,6 @@ const App = () => {
     }
   };
 
-  // Загрузка данных при монтировании
   useEffect(() => {
     fetchShibe();
     fetchActivity();
@@ -68,64 +71,52 @@ const App = () => {
 
   return (
     <div className="app">
-      <header className="header">
-        <h1>API Demo: Shibes & Activities</h1>
+      <header>
+        <h1>Галерея Сиба-Ину и Полезные Активности</h1>
       </header>
 
-      <div className="api-blocks">
-        {/* Блок с изображением сиба-ину */}
-        <div className="api-block">
-          <h2>Random Shiba Inu</h2>
+      <div className="content">
+        <section className="shibe-section">
+          <h2>Случайный Сиба-Ину</h2>
           {loading.shibe ? (
-            <div className="loader">Loading shibe...</div>
+            <div className="loader">Загружаем милашку...</div>
           ) : (
             <>
               {error.shibe && <div className="error">{error.shibe}</div>}
-              <div className="image-container">
-                {shibeImage && (
-                  <img 
-                    src={shibeImage} 
-                    alt="Random shiba inu"
-                    onError={(e) => {
-                      e.target.src = 'https://cdn.shibe.online/shibes/1.jpg';
-                    }}
-                  />
-                )}
+              <div className="image-wrapper">
+                <img 
+                  src={shibeImage} 
+                  alt="Случайный Сиба-Ину"
+                  onError={(e) => {
+                    e.target.src = 'https://cdn.shibe.online/shibes/1.jpg';
+                  }}
+                />
               </div>
-              <button 
-                onClick={fetchShibe}
-                disabled={loading.shibe}
-              >
-                {loading.shibe ? 'Loading...' : 'New Shibe'}
+              <button onClick={fetchShibe}>
+                {loading.shibe ? 'Загрузка...' : 'Новая собака'}
               </button>
             </>
           )}
-        </div>
+        </section>
 
-        {/* Блок с активностью */}
-        <div className="api-block">
-          <h2>Random Activity</h2>
+        <section className="activity-section">
+          <h2>Случайная Активность</h2>
           {loading.activity ? (
-            <div className="loader">Loading activity...</div>
+            <div className="loader">Ищем занятие...</div>
           ) : (
             <>
               {error.activity && <div className="error">{error.activity}</div>}
-              {activity && (
-                <div className="activity-card">
-                  <h3>{activity.activity}</h3>
-                  <p>Type: {activity.type}</p>
-                  <p>Participants: {activity.participants}</p>
-                </div>
-              )}
-              <button 
-                onClick={fetchActivity}
-                disabled={loading.activity}
-              >
-                {loading.activity ? 'Loading...' : 'New Activity'}
+              <div className="activity-card">
+                <h3>{activity?.activity}</h3>
+                <p><strong>Тип:</strong> {activity?.type}</p>
+                <p><strong>Участники:</strong> {activity?.participants}</p>
+              </div>
+              <button onClick={fetchActivity}>
+                {loading.activity ? 'Загрузка...' : 'Новое занятие'}
               </button>
             </>
           )}
-        </div>
+        </section>
       </div>
     </div>
   );
