@@ -1,62 +1,171 @@
-import React, { useEffect, useState } from "react";
-import "./App.css";
+import React, { useState, useEffect, useRef } from 'react';
+import './App.css';
 
-function App() {
-  const [quote, setQuote] = useState("Загрузка...");
-  const [catUrl, setCatUrl] = useState("");
-  const [mode, setMode] = useState("cat"); // "cat" или "anime"
+const App = () => {
+  const [animeQuote, setAnimeQuote] = useState(null);
+  const [catFact, setCatFact] = useState(null);
+  const [loading, setLoading] = useState({
+    quote: false,
+    fact: false
+  });
+  const [error, setError] = useState({
+    quote: null,
+    fact: null
+  });
 
-  const fetchQuote = async () => {
+  // Refs для отмены запросов
+  const abortControllers = useRef({
+    quote: null,
+    fact: null
+  });
+
+  // Универсальный fetch с таймаутом
+  const fetchData = async (type) => {
+    // Отменяем предыдущий запрос
+    if (abortControllers.current[type]) {
+      abortControllers.current[type].abort();
+    }
+
+    // Создаем новый AbortController
+    const controller = new AbortController();
+    abortControllers.current[type] = controller;
+
+    setLoading(prev => ({ ...prev, [type]: true }));
+    setError(prev => ({ ...prev, [type]: null }));
+
+    const urls = {
+      quote: 'https://animechan.xyz/api/random',
+      fact: 'https://catfact.ninja/fact'
+    };
+
     try {
-      let response, data;
-      if (mode === "cat") {
-        response = await fetch("https://catfact.ninja/fact");
-        data = await response.json();
-        setQuote(data.fact);
-      } else {
-        response = await fetch("https://animechan.xyz/api/random");
-        data = await response.json();
-        setQuote(`"${data.quote}" — ${data.character} (${data.anime})`);
+      // Таймаут 5 секунд
+      const timeout = setTimeout(() => {
+        controller.abort();
+      }, 5000);
+
+      const response = await fetch(urls[type], {
+        signal: controller.signal
+      });
+
+      clearTimeout(timeout);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-    } catch (error) {
-      setQuote("Что-то пошло не так. Проверь подключение.");
+
+      const data = await response.json();
+
+      if (!data) {
+        throw new Error('Invalid data format');
+      }
+
+      type === 'quote' ? setAnimeQuote(data) : setCatFact(data);
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        setError(prev => ({ ...prev, [type]: err.message }));
+      }
+    } finally {
+      setLoading(prev => ({ ...prev, [type]: false }));
     }
   };
 
-  const fetchCat = () => {
-    const url = `https://source.unsplash.com/300x300/?cat&sig=${Math.floor(Math.random() * 1000)}`;
-    setCatUrl(url);
-  };
-
-  const handleClick = () => {
-    fetchQuote();
-    fetchCat();
-  };
-
-  const handleModeChange = (e) => {
-    setMode(e.target.value);
-  };
-
+  // Загрузка данных при монтировании
   useEffect(() => {
-    handleClick();
-  }, [mode]);
+    fetchData('quote');
+    fetchData('fact');
+
+    return () => {
+      // Отмена всех запросов при размонтировании
+      Object.values(abortControllers.current).forEach(controller => {
+        if (controller) controller.abort();
+      });
+    };
+  }, []);
 
   return (
     <div className="app">
-      <h1>{mode === "cat" ? "Факт о кошках" : "Цитата из аниме"}</h1>
-      <div className="controls">
-        <select onChange={handleModeChange} value={mode}>
-          <option value="cat">Факт о кошках</option>
-          <option value="anime">Цитата из аниме</option>
-        </select>
-        <button className="btn" onClick={handleClick}>
-          Получить новую
-        </button>
+      <header>
+        <h1>Anime Quotes & Cat Facts</h1>
+        <p>Powered by external APIs</p>
+      </header>
+
+      <div className="content">
+        {/* Блок с цитатой из аниме */}
+        <section className="quote-section">
+          <h2>Random Anime Quote</h2>
+          
+          {loading.quote ? (
+            <div className="loader">
+              <div className="spinner"></div>
+              <p>Loading quote...</p>
+            </div>
+          ) : (
+            <>
+              {error.quote && (
+                <div className="error">
+                  <p>⚠️ Error: {error.quote}</p>
+                  <button onClick={() => fetchData('quote')}>Retry</button>
+                </div>
+              )}
+              
+              {animeQuote && (
+                <div className="quote-card">
+                  <blockquote>"{animeQuote.quote}"</blockquote>
+                  <div className="quote-meta">
+                    <p><strong>Anime:</strong> {animeQuote.anime}</p>
+                    <p><strong>Character:</strong> {animeQuote.character}</p>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+          
+          <button 
+            onClick={() => fetchData('quote')}
+            disabled={loading.quote}
+          >
+            {loading.quote ? 'Loading...' : 'New Quote'}
+          </button>
+        </section>
+
+        {/* Блок с фактом о котах */}
+        <section className="fact-section">
+          <h2>Random Cat Fact</h2>
+          
+          {loading.fact ? (
+            <div className="loader">
+              <div className="spinner"></div>
+              <p>Loading fact...</p>
+            </div>
+          ) : (
+            <>
+              {error.fact && (
+                <div className="error">
+                  <p>⚠️ Error: {error.fact}</p>
+                  <button onClick={() => fetchData('fact')}>Retry</button>
+                </div>
+              )}
+              
+              {catFact && (
+                <div className="fact-card">
+                  <p className="fact-text">{catFact.fact}</p>
+                  <p className="fact-length">Length: {catFact.length} chars</p>
+                </div>
+              )}
+            </>
+          )}
+          
+          <button 
+            onClick={() => fetchData('fact')}
+            disabled={loading.fact}
+          >
+            {loading.fact ? 'Loading...' : 'New Fact'}
+          </button>
+        </section>
       </div>
-      <p className="quote">{quote}</p>
-      <img className="cat" src={catUrl} alt="Котик" />
     </div>
   );
-}
+};
 
 export default App;
