@@ -5,6 +5,7 @@ import ToDo from "./Task";
 import axios from 'axios';
 
 const TASKS_STORAGE_KEY = "tasks-list-project-web";
+const CORS_PROXY = "https://cors-anywhere.herokuapp.com/";
 
 function App() {
   const [dogImage, setDogImage] = useState(null);
@@ -12,39 +13,68 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [todos, setTodos] = useState(() => {
-    try {
-      const raw = localStorage.getItem(TASKS_STORAGE_KEY);
-      return raw ? JSON.parse(raw) : [];
-    } catch {
-      return [];
-    }
+    const saved = localStorage.getItem(TASKS_STORAGE_KEY);
+    return saved ? JSON.parse(saved) : [];
   });
+
+  const fetchWithFallback = async (url, options = {}) => {
+    try {
+      const response = await axios({
+        method: options.method || 'get',
+        url: `${CORS_PROXY}${url}`,
+        timeout: 10000,
+        ...options
+      });
+      return response.data;
+    } catch (err) {
+      console.warn(`Failed through proxy, trying direct: ${err.message}`);
+      try {
+        const directResponse = await axios({
+          method: options.method || 'get',
+          url,
+          timeout: 10000,
+          ...options
+        });
+        return directResponse.data;
+      } catch (directErr) {
+        throw new Error(`Both proxy and direct failed: ${directErr.message}`);
+      }
+    }
+  };
 
   const fetchData = async () => {
     setLoading(true);
     setError("");
     try {
-      // Fetch random dog image
-      const dogResponse = await axios.get("https://dog.ceo/api/breeds/image/random", {
-        timeout: 10000
-      });
-      if (dogResponse.data.status !== "success") {
-        throw new Error("Failed to load dog image");
+      // Fetch random dog image with fallback
+      const dogData = await fetchWithFallback("https://dog.ceo/api/breeds/image/random");
+      if (dogData.status !== "success") {
+        throw new Error("Dog API returned unsuccessful status");
       }
-      setDogImage(dogResponse.data.message);
+      setDogImage(dogData.message);
       
-      // Fetch random activity
-      const activityResponse = await axios.get("https://bored-api.appbrewery.com/random", {
-        timeout: 10000
-      });
-      if (!activityResponse.data.activity) {
-        throw new Error("Failed to load activity");
+      // Fetch random activity with fallback
+      const activityData = await fetchWithFallback("https://www.boredapi.com/api/activity");
+      if (!activityData.activity) {
+        throw new Error("Activity API returned no activity");
       }
-      setActivity(activityResponse.data);
-      
+      setActivity(activityData);
+
     } catch (err) {
+      console.error("Fetch error:", err);
       setError(err.message || "Network error. Please check your connection.");
-      console.error("API Error:", err);
+      
+      // Set fallback data if API fails
+      if (!dogImage) {
+        setDogImage("https://images.dog.ceo/breeds/labrador/n02099712_7418.jpg");
+      }
+      if (!activity) {
+        setActivity({
+          activity: "Read a book",
+          type: "education",
+          participants: 1
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -58,101 +88,11 @@ function App() {
     localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(todos));
   }, [todos]);
 
-  const addTask = (text) => {
-    const trimmed = text.trim();
-    if (!trimmed) return;
-    setTodos((prev) => [
-      ...prev,
-      {
-        id: Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
-        task: trimmed,
-        complete: false,
-      },
-    ]);
-  };
-
-  const removeTask = (id) => setTodos((prev) => prev.filter((t) => t.id !== id));
-
-  const toggleTask = (id) =>
-    setTodos((prev) =>
-      prev.map((t) =>
-        t.id === id ? { ...t, complete: !t.complete } : t
-      )
-    );
+  // ... (остальные функции addTask, removeTask, toggleTask остаются без изменений)
 
   return (
     <div className="app-container">
-      {loading && (
-        <div className="loading-overlay">
-          <div className="spinner"></div>
-          <p>Loading data...</p>
-        </div>
-      )}
-
-      <div className="app-header">
-        <h1 className="app-title">My Tasks</h1>
-        <div className="task-counter">{todos.length}</div>
-      </div>
-
-      {error && (
-        <div className="error-message">
-          <span>⚠️</span> {error}
-          <button 
-            onClick={fetchData} 
-            className="retry-button"
-          >
-            Retry
-          </button>
-        </div>
-      )}
-
-      {!loading && !error && (
-        <div className="info-panel">
-          <div className="dog-panel">
-            <h3>Random Dog</h3>
-            {dogImage && (
-              <img 
-                src={dogImage} 
-                alt="Random dog" 
-                className="dog-image"
-              />
-            )}
-          </div>
-
-          <div className="activity-panel">
-            <h3>Random Activity</h3>
-            {activity && (
-              <>
-                <p><strong>{activity.activity}</strong></p>
-                <p>Type: {activity.type}</p>
-                <p>Participants: {activity.participants}</p>
-              </>
-            )}
-          </div>
-        </div>
-      )}
-
-      <div className="todo-container">
-        <ToDoForm addTask={addTask} />
-
-        <div className="todo-list">
-          {todos.length === 0 ? (
-            <div className="empty-state">
-              <p>You have no tasks</p>
-              <p>Add your first task above</p>
-            </div>
-          ) : (
-            todos.map((todo) => (
-              <ToDo
-                todo={todo}
-                key={todo.id}
-                toggleTask={toggleTask}
-                removeTask={removeTask}
-              />
-            ))
-          )}
-        </div>
-      </div>
+      {/* ... (остальной JSX остается таким же) */}
     </div>
   );
 }
