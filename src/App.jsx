@@ -4,8 +4,6 @@ import ToDoForm from "./AddTask";
 import "./App.css";
 
 function App() {
-  // Состояние для котика (url картинки)
-  const [catUrl, setCatUrl] = useState("");
   // Состояние для факта о коте
   const [catFact, setCatFact] = useState("");
   // Состояние для цены биткоина
@@ -13,18 +11,6 @@ function App() {
 
   // Состояние для задач
   const [todos, setTodos] = useState([]);
-
-  // Получить картинку котика
-  const fetchCatImage = async () => {
-    try {
-      // Картинки с placekitten.com, просто URL меняем для обновления
-      const width = 200 + Math.floor(Math.random() * 100);
-      const height = 300 + Math.floor(Math.random() * 100);
-      setCatUrl(`https://placekitten.com/${width}/${height}`);
-    } catch (error) {
-      console.error("Ошибка загрузки котика:", error);
-    }
-  };
 
   // Получить факт о коте
   const fetchCatFact = async () => {
@@ -54,7 +40,6 @@ function App() {
 
   // Загружаем данные при монтировании компонента
   useEffect(() => {
-    fetchCatImage();
     fetchCatFact();
     fetchBtcPrice();
   }, []);
@@ -90,15 +75,6 @@ function App() {
       </header>
 
       <section className="cat-section">
-        <h2>Котик 🐱</h2>
-        {catUrl && (
-          <img
-            src={catUrl}
-            alt="Котик"
-            style={{ maxWidth: "300px", borderRadius: "8px" }}
-          />
-        )}
-        <button onClick={fetchCatImage}>Поменять котика</button>
         <p>{catFact}</p>
         <button onClick={fetchCatFact}>Получить новый факт</button>
       </section>
