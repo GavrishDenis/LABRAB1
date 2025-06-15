@@ -1,75 +1,58 @@
-import React, { useState, useEffect } from 'react';
-import './App.css';
+import React, { useState, useEffect } from 'react'
+import './App.css'
 
 const App = () => {
-  const [btcPrice, setBtcPrice] = useState(null);
-  const [catFact, setCatFact] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [btcPrice, setBtcPrice] = useState(null)
+  const [catFact, setCatFact] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // 1. Запрос курса биткоина через российский прокси
-        const btcResponse = await fetch('https://cryptoprice.vercel.app/api/coingecko?ids=bitcoin&vs_currencies=rub');
-        const btcData = await btcResponse.json();
-        setBtcPrice(btcData.bitcoin?.rub || 'Нет данных');
-        
-        // 2. Альтернативный API фактов о котах
-        const catResponse = await fetch('https://catfact.ninja/fact');
-        const catData = await catResponse.json();
-        setCatFact(catData.fact || 'Не удалось загрузить факт');
-        
+        // Запрос курса биткоина
+        const btcResponse = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=rub')
+        const btcData = await btcResponse.json()
+        setBtcPrice(btcData.bitcoin.rub)
+
+        // Запрос факта о котах
+        const catResponse = await fetch('https://meowfacts.herokuapp.com/')
+        const catData = await catResponse.json()
+        setCatFact(catData.data[0])
+
       } catch (err) {
-        setError('Ошибка загрузки. Обновите страницу или попробуйте позже.');
-        console.error('API Error:', err);
+        setError('Ошибка загрузки данных. Проверьте подключение к интернету.')
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
+    }
 
-    fetchData();
-  }, []);
+    fetchData()
+  }, [])
 
-  const refreshData = () => {
-    setLoading(true);
-    setError(null);
-    fetchData();
-  };
+  if (loading) {
+    return <div className="loading">Загрузка данных...</div>
+  }
+
+  if (error) {
+    return <div className="error">{error}</div>
+  }
 
   return (
     <div className="app">
       <h1>Курс биткоина и факты о котах</h1>
       
-      {error && (
-        <div className="error">
-          {error}
-          <button onClick={refreshData}>Попробовать снова</button>
-        </div>
-      )}
+      <div className="card">
+        <h2>BTC/RUB</h2>
+        <p className="price">{btcPrice} ₽</p>
+      </div>
 
-      {loading ? (
-        <div className="loading">
-          <div className="spinner"></div>
-          <p>Загрузка данных...</p>
-        </div>
-      ) : (
-        <>
-          <div className="card">
-            <h2>BTC/RUB</h2>
-            <p className="price">{btcPrice} ₽</p>
-            <small>Источник: CoinGecko (через прокси)</small>
-          </div>
-
-          <div className="card">
-            <h2>Факт о котах</h2>
-            <p className="fact">{catFact}</p>
-            <button onClick={refreshData}>Новый факт</button>
-          </div>
-        </>
-      )}
+      <div className="card">
+        <h2>Факт о котах</h2>
+        <p className="fact">{catFact}</p>
+      </div>
     </div>
-  );
-};
+  )
+}
 
-export default App;
+export default App
