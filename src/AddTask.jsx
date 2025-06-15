@@ -1,26 +1,34 @@
 import React, { useState } from "react";
 
 const ToDoForm = ({ addTask }) => {
-  const [input, setInput] = useState("");
+  const [userInput, setUserInput] = useState("");
 
-  const handleChange = (e) => setInput(e.target.value);
+  const handleChange = (e) => {
+    setUserInput(e.currentTarget.value);
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (input.trim() === "") return;
-    addTask(input.trim());
-    setInput("");
+    addTask(userInput);
+    setUserInput("");
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter") {
+      handleSubmit(e);
+    }
   };
 
   return (
     <form onSubmit={handleSubmit} className="todo-form">
       <input
+        value={userInput}
         type="text"
-        placeholder="Введите задачу..."
-        value={input}
         onChange={handleChange}
+        onKeyDown={handleKeyPress}
+        placeholder="Введите задачу..."
       />
-      <button type="submit">Добавить</button>
+      <button type="submit">Сохранить</button>
     </form>
   );
 };
