@@ -2,94 +2,108 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 
 const App = () => {
-  // Состояние для блока с биткоином
-  const [btcData, setBtcData] = useState({
-    price: null,
-    loading: true,
-    error: null
-  });
+  // Состояние для биткоина
+  const [btcPrice, setBtcPrice] = useState(null);
+  const [btcLoading, setBtcLoading] = useState(true);
+  const [btcError, setBtcError] = useState(null);
 
-  // Состояние для блока с фактами о котах
-  const [catData, setCatData] = useState({
-    fact: null,
-    loading: true,
-    error: null
-  });
+  // Состояние для фактов о котах
+  const [catFact, setCatFact] = useState(null);
+  const [catLoading, setCatLoading] = useState(true);
+  const [catError, setCatError] = useState(null);
 
-  // Функция для загрузки курса биткоина
-  const fetchBitcoinPrice = async () => {
+  // Общее состояние ошибки
+  const [globalError, setGlobalError] = useState(null);
+
+  // Загрузка курса биткоина
+  const fetchBtcPrice = async () => {
     try {
-      setBtcData(prev => ({ ...prev, loading: true, error: null }));
+      setBtcLoading(true);
+      setBtcError(null);
       
-      const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=rub');
-      if (!response.ok) throw new Error('Не удалось загрузить курс');
+      const response = await fetch('https://cryptoprice.vercel.app/api/coingecko?ids=bitcoin&vs_currencies=rub');
+      if (!response.ok) throw new Error('Ошибка загрузки курса');
       
       const data = await response.json();
-      setBtcData({
-        price: data.bitcoin?.rub || 'Нет данных',
-        loading: false,
-        error: null
-      });
+      setBtcPrice(data.bitcoin?.rub || 'Нет данных');
     } catch (err) {
-      setBtcData({
-        ...btcData,
-        loading: false,
-        error: err.message
-      });
+      setBtcError(err.message);
+      console.error('BTC API Error:', err);
+    } finally {
+      setBtcLoading(false);
     }
   };
 
-  // Функция для загрузки фактов о котах
+  // Загрузка фактов о котах
   const fetchCatFact = async () => {
     try {
-      setCatData(prev => ({ ...prev, loading: true, error: null }));
+      setCatLoading(true);
+      setCatError(null);
       
       const response = await fetch('https://catfact.ninja/fact');
-      if (!response.ok) throw new Error('Не удалось загрузить факт');
+      if (!response.ok) throw new Error('Ошибка загрузки факта');
       
       const data = await response.json();
-      setCatData({
-        fact: data.fact || 'Нет данных',
-        loading: false,
-        error: null
-      });
+      setCatFact(data.fact || 'Не удалось загрузить факт');
     } catch (err) {
-      setCatData({
-        ...catData,
-        loading: false,
-        error: err.message
-      });
+      setCatError(err.message);
+      console.error('Cat API Error:', err);
+    } finally {
+      setCatLoading(false);
     }
   };
 
   // Первоначальная загрузка данных
   useEffect(() => {
-    fetchBitcoinPrice();
-    fetchCatFact();
+    const loadData = async () => {
+      try {
+        await Promise.all([fetchBtcPrice(), fetchCatFact()]);
+      } catch (err) {
+        setGlobalError('Ошибка при загрузке данных');
+      }
+    };
+
+    loadData();
   }, []);
 
   return (
     <div className="app">
       <h1>Курс биткоина и факты о котах</h1>
       
+      {globalError && (
+        <div className="error">
+          {globalError}
+          <button onClick={() => window.location.reload()}>Обновить страницу</button>
+        </div>
+      )}
+
       <div className="content">
         {/* Блок с курсом биткоина */}
         <div className="card">
           <h2>BTC/RUB</h2>
           
-          {btcData.loading ? (
-            <div className="loading">Загрузка курса...</div>
-          ) : btcData.error ? (
-            <div className="error">{btcData.error}</div>
+          {btcLoading ? (
+            <div className="loading">
+              <div className="spinner"></div>
+              <p>Загрузка курса...</p>
+            </div>
+          ) : btcError ? (
+            <div className="error">
+              {btcError}
+              <button onClick={fetchBtcPrice}>Попробовать снова</button>
+            </div>
           ) : (
-            <p className="price">{btcData.price} ₽</p>
+            <>
+              <p className="price">{btcPrice} ₽</p>
+              <small>Источник: CoinGecko (через прокси)</small>
+            </>
           )}
           
           <button 
-            onClick={fetchBitcoinPrice}
-            disabled={btcData.loading}
+            onClick={fetchBtcPrice}
+            disabled={btcLoading}
           >
-            {btcData.loading ? 'Обновление...' : 'Обновить курс'}
+            {btcLoading ? 'Обновление...' : 'Обновить курс'}
           </button>
         </div>
 
@@ -97,19 +111,25 @@ const App = () => {
         <div className="card">
           <h2>Факт о котах</h2>
           
-          {catData.loading ? (
-            <div className="loading">Загрузка факта...</div>
-          ) : catData.error ? (
-            <div className="error">{catData.error}</div>
+          {catLoading ? (
+            <div className="loading">
+              <div className="spinner"></div>
+              <p>Загрузка факта...</p>
+            </div>
+          ) : catError ? (
+            <div className="error">
+              {catError}
+              <button onClick={fetchCatFact}>Попробовать снова</button>
+            </div>
           ) : (
-            <p className="fact">{catData.fact}</p>
+            <p className="fact">{catFact}</p>
           )}
           
           <button 
             onClick={fetchCatFact}
-            disabled={catData.loading}
+            disabled={catLoading}
           >
-            {catData.loading ? 'Загрузка...' : 'Новый факт'}
+            {catLoading ? 'Загрузка...' : 'Новый факт'}
           </button>
         </div>
       </div>
