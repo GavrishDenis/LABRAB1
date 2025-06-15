@@ -1,8 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 
-// Российский прокси-сервер для обхода CORS
-const RUSSIAN_PROXY = 'https://cors-anywhere.herokuapp.com/';
+// Локальные резервные данные
+const LOCAL_DATA = {
+  shibes: [
+    'https://cdn.shibe.online/shibes/1.jpg',
+    'https://cdn.shibe.online/shibes/2.jpg',
+    'https://cdn.shibe.online/shibes/3.jpg'
+  ],
+  activities: [
+    { activity: "Почитать книгу", type: "образование", participants: 1 },
+    { activity: "Сделать зарядку", type: "спорт", participants: 1 },
+    { activity: "Приготовить новое блюдо", type: "кулинария", participants: 1 }
+  ]
+};
 
 const App = () => {
   const [shibeImage, setShibeImage] = useState('');
@@ -16,106 +27,148 @@ const App = () => {
     activity: null
   });
 
-  // 1. Загрузка изображения через прокси
-  const fetchShibe = async () => {
-    try {
-      setLoading(prev => ({ ...prev, shibe: true }));
-      setError(prev => ({ ...prev, shibe: null }));
-      
-      const response = await fetch(`${RUSSIAN_PROXY}https://shibe.online/api/shibes?count=1`, {
-        headers: {
-          'X-Requested-With': 'XMLHttpRequest'
-        }
-      });
-      
-      if (!response.ok) throw new Error('Ошибка загрузки изображения');
-      
-      const data = await response.json();
-      setShibeImage(data[0]);
-    } catch (err) {
-      setError(prev => ({ ...prev, shibe: err.message }));
-      setShibeImage('https://cdn.shibe.online/shibes/1.jpg');
-    } finally {
-      setLoading(prev => ({ ...prev, shibe: false }));
-    }
-  };
+  // 1. Универсальный загрузчик с тремя уровнями резервирования
+  const fetchData = async (type) => {
+    setLoading(prev => ({ ...prev, [type]: true }));
+    setError(prev => ({ ...prev, [type]: null }));
 
-  // 2. Загрузка активности через прокси
-  const fetchActivity = async () => {
     try {
-      setLoading(prev => ({ ...prev, activity: true }));
-      setError(prev => ({ ...prev, activity: null }));
-      
-      const response = await fetch(`${RUSSIAN_PROXY}https://www.boredapi.com/api/activity`);
-      
-      if (!response.ok) throw new Error('Ошибка загрузки активности');
-      
-      const data = await response.json();
-      setActivity(data);
+      // Попытка 1: Прямой запрос к API
+      try {
+        const apiUrls = {
+          shibe: 'https://shibe.online/api/shibes?count=1',
+          activity: 'https://www.boredapi.com/api/activity'
+        };
+
+        const response = await fetch(apiUrls[type]);
+        if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+        
+        const data = await response.json();
+        const result = type === 'shibe' ? data[0] : data;
+        
+        if (result) {
+          type === 'shibe' ? setShibeImage(result) : setActivity(result);
+          return;
+        }
+      } catch (apiError) {
+        console.warn(`Ошибка основного API (${type}):`, apiError);
+        throw apiError;
+      }
+
+      // Попытка 2: Альтернативный источник
+      try {
+        const backupUrls = {
+          shibe: 'https://shibe.online/api/shibes?count=1&https=true',
+          activity: 'https://www.boredapi.com/api/activity?https=true'
+        };
+
+        const response = await fetch(backupUrls[type]);
+        if (!response.ok) throw new Error(`Backup error ${response.status}`);
+        
+        const data = await response.json();
+        const result = type === 'shibe' ? data[0] : data;
+        
+        if (result) {
+          type === 'shibe' ? setShibeImage(result) : setActivity(result);
+          return;
+        }
+      } catch (backupError) {
+        console.warn(`Ошибка резервного API (${type}):`, backupError);
+        throw backupError;
+      }
+
+      // Попытка 3: Локальные данные
+      throw new Error('Все API недоступны, используем локальные данные');
+
     } catch (err) {
-      setError(prev => ({ ...prev, activity: err.message }));
-      setActivity({
-        activity: "Почитать книгу",
-        type: "education",
-        participants: 1
-      });
+      setError(prev => ({ ...prev, [type]: err.message }));
+      
+      // Используем локальные данные
+      if (type === 'shibe') {
+        const randomImage = LOCAL_DATA.shibes[Math.floor(Math.random() * LOCAL_DATA.shibes.length)];
+        setShibeImage(randomImage);
+      } else {
+        const randomActivity = LOCAL_DATA.activities[Math.floor(Math.random() * LOCAL_DATA.activities.length)];
+        setActivity(randomActivity);
+      }
     } finally {
-      setLoading(prev => ({ ...prev, activity: false }));
+      setLoading(prev => ({ ...prev, [type]: false }));
     }
   };
 
   useEffect(() => {
-    fetchShibe();
-    fetchActivity();
+    fetchData('shibe');
+    fetchData('activity');
   }, []);
+
+  // 2. Обработчик ошибок изображений
+  const handleImageError = (e) => {
+    console.warn('Ошибка загрузки изображения, используем резервное');
+    e.target.src = LOCAL_DATA.shibes[0];
+  };
 
   return (
     <div className="app">
       <header>
         <h1>Галерея Сиба-Ину и Полезные Активности</h1>
+        <p className="subtitle">Даже при проблемах с интернетом вы увидите контент</p>
       </header>
 
       <div className="content">
         <section className="shibe-section">
           <h2>Случайный Сиба-Ину</h2>
-          {loading.shibe ? (
-            <div className="loader">Загружаем милашку...</div>
-          ) : (
-            <>
-              {error.shibe && <div className="error">{error.shibe}</div>}
-              <div className="image-wrapper">
-                <img 
-                  src={shibeImage} 
-                  alt="Случайный Сиба-Ину"
-                  onError={(e) => {
-                    e.target.src = 'https://cdn.shibe.online/shibes/1.jpg';
-                  }}
-                />
-              </div>
-              <button onClick={fetchShibe}>
-                {loading.shibe ? 'Загрузка...' : 'Новая собака'}
-              </button>
-            </>
+          
+          {loading.shibe && <div className="loader">Загружаем собачку...</div>}
+          
+          {error.shibe && (
+            <div className="error">
+              <p>⚠️ {error.shibe}</p>
+              <p>Показываем локальное изображение</p>
+            </div>
           )}
+
+          <div className="image-wrapper">
+            <img 
+              src={shibeImage} 
+              alt="Случайный Сиба-Ину"
+              onError={handleImageError}
+            />
+          </div>
+
+          <button 
+            onClick={() => fetchData('shibe')}
+            disabled={loading.shibe}
+          >
+            {loading.shibe ? 'Загрузка...' : 'Новая собака'}
+          </button>
         </section>
 
         <section className="activity-section">
           <h2>Случайная Активность</h2>
-          {loading.activity ? (
-            <div className="loader">Ищем занятие...</div>
-          ) : (
-            <>
-              {error.activity && <div className="error">{error.activity}</div>}
-              <div className="activity-card">
-                <h3>{activity?.activity}</h3>
-                <p><strong>Тип:</strong> {activity?.type}</p>
-                <p><strong>Участники:</strong> {activity?.participants}</p>
-              </div>
-              <button onClick={fetchActivity}>
-                {loading.activity ? 'Загрузка...' : 'Новое занятие'}
-              </button>
-            </>
+          
+          {loading.activity && <div className="loader">Ищем занятие...</div>}
+          
+          {error.activity && (
+            <div className="error">
+              <p>⚠️ {error.activity}</p>
+              <p>Показываем локальную активность</p>
+            </div>
           )}
+
+          {activity && (
+            <div className="activity-card">
+              <h3>{activity.activity}</h3>
+              <p><strong>Тип:</strong> {activity.type}</p>
+              <p><strong>Участники:</strong> {activity.participants}</p>
+            </div>
+          )}
+
+          <button 
+            onClick={() => fetchData('activity')}
+            disabled={loading.activity}
+          >
+            {loading.activity ? 'Загрузка...' : 'Новое занятие'}
+          </button>
         </section>
       </div>
     </div>
