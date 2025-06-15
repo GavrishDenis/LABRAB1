@@ -3,42 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Anime Quotes & Cat Facts</title>
-  <meta name="description" content="Get random anime quotes and interesting cat facts">
-  
-  <!-- Favicon (можно заменить на свой) -->
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐱</text></svg>">
-  
-  <!-- Предзагрузка шрифтов -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-  
-  <!-- Предзагрузка API -->
-  <link rel="preconnect" href="https://animechan.xyz">
-  <link rel="preconnect" href="https://catfact.ninja">
-  
+  <title>Anime & Cat Facts</title>
   <style>
-    /* Базовые стили для отображения до загрузки React */
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-      background-color: #f8f8ff;
-      color: #333;
-    }
-    
+    /* Базовые стили для корневого элемента */
     #root {
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+      background-color: #f8f8ff;
     }
     
-    .loading-screen {
+    /* Стили для экрана загрузки */
+    .app-loading {
       position: fixed;
       top: 0;
       left: 0;
-      width: 100%;
-      height: 100%;
+      right: 0;
+      bottom: 0;
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -46,15 +27,16 @@
       background: linear-gradient(135deg, #6a5acd, #ff69b4);
       color: white;
       z-index: 1000;
+      transition: opacity 0.5s ease-out;
     }
     
-    .loading-spinner {
+    .app-loading-spinner {
       width: 50px;
       height: 50px;
       border: 5px solid rgba(255, 255, 255, 0.3);
       border-radius: 50%;
       border-top-color: white;
-      animation: spin 1s ease-in-out infinite;
+      animation: spin 1s linear infinite;
       margin-bottom: 20px;
     }
     
@@ -64,25 +46,36 @@
   </style>
 </head>
 <body>
-  <!-- Экран загрузки, который исчезнет после инициализации React -->
-  <div id="loading-screen" class="loading-screen">
-    <div class="loading-spinner"></div>
-    <h2>Loading Awesome Content...</h2>
+  <!-- Экран загрузки - будет удален React'ом -->
+  <div id="loading-screen" class="app-loading">
+    <div class="app-loading-spinner"></div>
+    <h2>Загрузка приложения...</h2>
   </div>
 
   <!-- Контейнер для React-приложения -->
   <div id="root"></div>
 
-  <!-- Скрипт для скрытия экрана загрузки -->
+  <!-- Скрипт для плавного перехода -->
   <script>
-    window.addEventListener('load', function() {
-      setTimeout(function() {
-        const loadingScreen = document.getElementById('loading-screen');
+    // Плавное скрытие экрана загрузки после инициализации приложения
+    window.addEventListener('DOMContentLoaded', () => {
+      const loadingScreen = document.getElementById('loading-screen');
+      
+      // Функция для скрытия экрана загрузки
+      const hideLoadingScreen = () => {
         if (loadingScreen) {
           loadingScreen.style.opacity = '0';
-          setTimeout(() => loadingScreen.remove(), 500);
+          setTimeout(() => {
+            loadingScreen.remove();
+          }, 500);
         }
-      }, 500);
+      };
+
+      // Если React не загрузился за 5 секунд - все равно скрываем экран
+      setTimeout(hideLoadingScreen, 5000);
+      
+      // React должен вызвать этот метод после монтирования
+      window.appLoaded = hideLoadingScreen;
     });
   </script>
 </body>
