@@ -12,19 +12,17 @@ const ToDoForm = ({ addTask }) => {
   };
 
   const handleKeyPress = (e) => {
-    if (e.key === "Enter") {
-      handleSubmit(e);
-    }
+    if (e.key === "Enter") handleSubmit(e);
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} className="form">
       <input
         value={userInput}
         type="text"
         onChange={handleChange}
         onKeyDown={handleKeyPress}
-        placeholder="Введите значение..."
+        placeholder="Введите задачу..."
       />
       <button>Сохранить</button>
     </form>
