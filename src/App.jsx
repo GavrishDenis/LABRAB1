@@ -75,6 +75,7 @@ function App() {
       </header>
 
       <section className="cat-section">
+        <h2>Факт о котиках</h2>
         <p>{catFact}</p>
         <button onClick={fetchCatFact}>Получить новый факт</button>
       </section>
