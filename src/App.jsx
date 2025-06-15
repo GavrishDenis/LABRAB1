@@ -1,104 +1,110 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import ToDoForm from "./AddTask";
 import ToDo from "./Task";
+import "./App.css";
 
-const App = () => {
-  // Состояния
-  const [catUrl, setCatUrl] = useState("https://placekitten.com/300/300");
-  const [bitcoinPrice, setBitcoinPrice] = useState(null);
+function App() {
   const [todos, setTodos] = useState([]);
+  const [bitcoinPrice, setBitcoinPrice] = useState(null);
+  const [catFact, setCatFact] = useState("");
 
-  // Получение случайного котика (меняем размеры чтобы получить другой)
-  const fetchCat = () => {
-    const width = 300 + Math.floor(Math.random() * 100);
-    const height = 300 + Math.floor(Math.random() * 100);
-    setCatUrl(`https://placekitten.com/${width}/${height}`);
-  };
-
-  // Получение цены биткоина в рублях
+  // Загрузка цены Bitcoin с CoinCap API
   const fetchBitcoinPrice = async () => {
     try {
-      const response = await fetch(
-        "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=rub"
-      );
-      const data = await response.json();
-      setBitcoinPrice(data.bitcoin.rub);
+      const response = await fetch("https://api.coincap.io/v2/assets/bitcoin");
+      const json = await response.json();
+      if (json.data && json.data.priceUsd) {
+        setBitcoinPrice(parseFloat(json.data.priceUsd).toFixed(2));
+      } else {
+        setBitcoinPrice("Ошибка получения цены");
+      }
     } catch (error) {
-      console.error("Ошибка при получении курса биткоина:", error);
-      setBitcoinPrice(null);
+      setBitcoinPrice("Ошибка подключения");
+      console.error("Ошибка API Bitcoin:", error);
+    }
+  };
+
+  // Загрузка факта о коте с meowfacts
+  const fetchCatFact = async () => {
+    try {
+      const response = await fetch("https://meowfacts.herokuapp.com/");
+      const json = await response.json();
+      if (json.data && json.data.length > 0) {
+        setCatFact(json.data[0]);
+      } else {
+        setCatFact("Нет данных");
+      }
+    } catch (error) {
+      setCatFact("Ошибка подключения");
+      console.error("Ошибка API котов:", error);
     }
   };
 
   useEffect(() => {
-    fetchCat();
     fetchBitcoinPrice();
+    fetchCatFact();
   }, []);
 
   // Добавление задачи
-  const addTask = (taskText) => {
-    if (taskText.trim() === "") return;
-    const newTask = {
-      id: Date.now().toString(),
-      task: taskText,
-      complete: false,
-    };
-    setTodos((prev) => [...prev, newTask]);
+  const addTask = (userInput) => {
+    if (userInput) {
+      const newItem = {
+        id: Math.random().toString(36).substr(2, 9),
+        task: userInput,
+        complete: false,
+      };
+      setTodos([...todos, newItem]);
+    }
   };
 
   // Удаление задачи
   const removeTask = (id) => {
-    setTodos((prev) => prev.filter((todo) => todo.id !== id));
+    setTodos(todos.filter((todo) => todo.id !== id));
   };
 
   // Переключение статуса задачи
-  const toggleTask = (id) => {
-    setTodos((prev) =>
-      prev.map((todo) =>
-        todo.id === id ? { ...todo, complete: !todo.complete } : todo
+  const handleToggle = (id) => {
+    setTodos(
+      todos.map((task) =>
+        task.id === id ? { ...task, complete: !task.complete } : task
       )
     );
   };
 
   return (
     <div className="App">
-      <h1>React-приложение с котиками, биткоином и задачами</h1>
+      <header>
+        <h1>Список задач: {todos.length}</h1>
+      </header>
 
-      <section className="block">
-        <h2>Случайный котик</h2>
-        <img src={catUrl} alt="Random Cat" className="cat-img" />
-        <button onClick={fetchCat}>Поменять котика</button>
+      <section className="info-section">
+        <div className="cat-fact">
+          <h2>Факт о коте:</h2>
+          <p>{catFact || "Загрузка..."}</p>
+          <button onClick={fetchCatFact}>Получить новый факт</button>
+        </div>
+
+        <div className="bitcoin-price">
+          <h2>Цена Bitcoin (USD):</h2>
+          <p>{bitcoinPrice !== null ? `$${bitcoinPrice}` : "Загрузка..."}</p>
+          <button onClick={fetchBitcoinPrice}>Обновить цену</button>
+        </div>
       </section>
 
-      <section className="block">
-        <h2>Цена Bitcoin (RUB)</h2>
-        {bitcoinPrice !== null ? (
-          <p style={{ fontSize: "1.5rem", fontWeight: "bold" }}>
-            {bitcoinPrice.toLocaleString("ru-RU")} ₽
-          </p>
-        ) : (
-          <p>Ошибка загрузки цены</p>
-        )}
-        <button onClick={fetchBitcoinPrice}>Обновить цену</button>
-      </section>
+      <ToDoForm addTask={addTask} />
 
-      <section className="block">
-        <h2>Список задач ({todos.length})</h2>
-        <ToDoForm addTask={addTask} />
-        {todos.length === 0 ? (
-          <p>Пока нет задач</p>
-        ) : (
-          todos.map((todo) => (
-            <ToDo
-              key={todo.id}
-              todo={todo}
-              toggleTask={toggleTask}
-              removeTask={removeTask}
-            />
-          ))
-        )}
-      </section>
+      <div className="todo-list">
+        {todos.map((todo) => (
+          <ToDo
+            todo={todo}
+            key={todo.id}
+            toggleTask={handleToggle}
+            removeTask={removeTask}
+          />
+        ))}
+      </div>
     </div>
   );
-};
+}
 
 export default App;
