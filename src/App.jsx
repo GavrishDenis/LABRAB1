@@ -1,84 +1,30 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
+import Task from './Task';
 import './App.css';
 
 const App = () => {
-  const [animeQuote, setAnimeQuote] = useState(null);
-  const [catFact, setCatFact] = useState(null);
-  const [loading, setLoading] = useState({
-    quote: true,
-    fact: true
-  });
-  const [error, setError] = useState({
-    quote: null,
-    fact: null
-  });
-  const [showContent, setShowContent] = useState(false);
-
-  const abortControllers = useRef({
-    quote: null,
-    fact: null
-  });
-
-  const fetchData = async (type) => {
-    if (abortControllers.current[type]) {
-      abortControllers.current[type].abort();
-    }
-
-    const controller = new AbortController();
-    abortControllers.current[type] = controller;
-
-    setLoading(prev => ({ ...prev, [type]: true }));
-    setError(prev => ({ ...prev, [type]: null }));
-
-    const urls = {
-      quote: 'https://animechan.xyz/api/random',
-      fact: 'https://catfact.ninja/fact'
-    };
-
-    try {
-      const response = await fetch(urls[type], {
-        signal: controller.signal
-      });
-
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-
-      const data = await response.json();
-      type === 'quote' ? setAnimeQuote(data) : setCatFact(data);
-    } catch (err) {
-      if (err.name !== 'AbortError') {
-        setError(prev => ({ ...prev, [type]: err.message || 'Failed to fetch data' }));
-      }
-    } finally {
-      setLoading(prev => ({ ...prev, [type]: false }));
-    }
-  };
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    let mounted = true;
-
-    const loadData = async () => {
-      try {
-        await Promise.all([fetchData('quote'), fetchData('fact')]);
-      } finally {
-        if (mounted) setShowContent(true);
-      }
-    };
-
-    loadData();
-
-    return () => {
-      mounted = false;
-      Object.values(abortControllers.current).forEach(controller => {
-        if (controller) controller.abort();
-      });
-    };
+    // Можно добавить общую загрузку данных при необходимости
+    setLoading(false);
   }, []);
 
-  if (!showContent) {
+  if (loading) {
     return (
       <div className="loading-screen">
-        <div className="loading-spinner"></div>
-        <h2>Loading application...</h2>
+        <div className="spinner"></div>
+        <p>Loading application...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="error">
+        <p>Error: {error}</p>
+        <button onClick={() => window.location.reload()}>Reload</button>
       </div>
     );
   }
@@ -86,75 +32,20 @@ const App = () => {
   return (
     <div className="app">
       <header>
-        <h1>Anime Quotes & Cat Facts</h1>
-        <p>Powered by external APIs</p>
+        <h1>Crypto & Cat Facts</h1>
+        <p>Real-time data from public APIs</p>
       </header>
-
       <div className="content">
-        <section className="quote-section">
-          <h2>Random Anime Quote</h2>
-          {loading.quote ? (
-            <div className="loader">
-              <div className="spinner"></div>
-              <p>Loading quote...</p>
-            </div>
-          ) : (
-            <>
-              {error.quote && (
-                <div className="error">
-                  <p>⚠️ Error: {error.quote}</p>
-                  <button onClick={() => fetchData('quote')}>Retry</button>
-                </div>
-              )}
-              {animeQuote && (
-                <div className="quote-card">
-                  <blockquote>"{animeQuote.quote}"</blockquote>
-                  <div className="quote-meta">
-                    <p><strong>Anime:</strong> {animeQuote.anime}</p>
-                    <p><strong>Character:</strong> {animeQuote.character}</p>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-          <button 
-            onClick={() => fetchData('quote')}
-            disabled={loading.quote}
-          >
-            {loading.quote ? 'Loading...' : 'New Quote'}
-          </button>
-        </section>
-
-        <section className="fact-section">
-          <h2>Random Cat Fact</h2>
-          {loading.fact ? (
-            <div className="loader">
-              <div className="spinner"></div>
-              <p>Loading fact...</p>
-            </div>
-          ) : (
-            <>
-              {error.fact && (
-                <div className="error">
-                  <p>⚠️ Error: {error.fact}</p>
-                  <button onClick={() => fetchData('fact')}>Retry</button>
-                </div>
-              )}
-              {catFact && (
-                <div className="fact-card">
-                  <p className="fact-text">{catFact.fact}</p>
-                  <p className="fact-length">Length: {catFact.length} chars</p>
-                </div>
-              )}
-            </>
-          )}
-          <button 
-            onClick={() => fetchData('fact')}
-            disabled={loading.fact}
-          >
-            {loading.fact ? 'Loading...' : 'New Fact'}
-          </button>
-        </section>
+        <Task 
+          title="Bitcoin Price" 
+          apiUrl="https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=rub" 
+          type="crypto" 
+        />
+        <Task 
+          title="Random Cat Fact" 
+          apiUrl="https://meowfacts.herokuapp.com/" 
+          type="cat" 
+        />
       </div>
     </div>
   );
