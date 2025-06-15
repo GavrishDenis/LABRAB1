@@ -5,11 +5,10 @@ import ToDo from "./Task";
 import axios from 'axios';
 
 const TASKS_STORAGE_KEY = "tasks-list-project-web";
-const WEATHER_API_KEY = "c7616da4b68205c2f3ae73df2c31d177";
 
 function App() {
-  const [rates, setRates] = useState({});
-  const [weather, setWeather] = useState(null);
+  const [dogImage, setDogImage] = useState(null);
+  const [activity, setActivity] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [todos, setTodos] = useState(() => {
@@ -24,30 +23,14 @@ function App() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const { data } = await axios.get(
-          "https://www.cbr-xml-daily.ru/daily_json.js"
-        );
-        if (!data || !data.Valute)
-          throw new Error("Валютные данные не найдены");
-        setRates({
-          USD: data.Valute.USD.Value.toFixed(2).replace(".", ","),
-          EUR: data.Valute.EUR.Value.toFixed(2).replace(".", ","),
-        });
-
-        const getPosition = () =>
-          new Promise((resolve, reject) => {
-            if (!navigator.geolocation) reject(new Error("Нет геолокации"));
-            navigator.geolocation.getCurrentPosition(resolve, reject);
-          });
-
-        const pos = await getPosition();
-        const { latitude, longitude } = pos.coords;
-
-        const res = await axios.get(
-          `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${WEATHER_API_KEY}&units=metric&lang=ru`
-        );
-        if (!res.data || !res.data.main) throw new Error("Погода не найдена");
-        setWeather(res.data);
+        // Fetch random dog image
+        const dogResponse = await axios.get("https://dog.ceo/api/breeds/image/random");
+        setDogImage(dogResponse.data.message);
+        
+        // Fetch random activity
+        const activityResponse = await axios.get("https://bored-api.appbrewery.com/random");
+        setActivity(activityResponse.data);
+        
         setError("");
       } catch (err) {
         setError(err.message || "Ошибка загрузки данных");
@@ -106,32 +89,23 @@ function App() {
 
       {!loading && !error && (
         <div className="info-panel">
-          <div className="currency-panel">
-            <div className="currency-item">
-              <span className="currency-flag usd">$</span>
-              <span className="currency-value">{rates.USD} ₽</span>
+          {dogImage && (
+            <div className="dog-panel">
+              <img 
+                src={dogImage} 
+                alt="Random dog" 
+                className="dog-image"
+                style={{ maxWidth: '100%', borderRadius: '8px' }}
+              />
             </div>
-            <div className="currency-item">
-              <span className="currency-flag eur">€</span>
-              <span className="currency-value">{rates.EUR} ₽</span>
-            </div>
-          </div>
+          )}
 
-          {weather && (
-            <div className="weather-panel">
-              <div className="weather-icon">
-                <img
-                  src={`https://openweathermap.org/img/w/${weather.weather[0].icon}.png`}
-                  alt={weather.weather[0].description}
-                />
-              </div>
-              <div className="weather-details">
-                <div className="weather-temp">{weather.main.temp.toFixed(1)}°C</div>
-                <div className="weather-meta">
-                  <span title="Скорость ветра">💨 {weather.wind.speed} м/с</span>
-                  <span title="Облачность">☁️ {weather.clouds.all}%</span>
-                </div>
-              </div>
+          {activity && (
+            <div className="activity-panel">
+              <h3>Random Activity</h3>
+              <p><strong>Type:</strong> {activity.type}</p>
+              <p><strong>Activity:</strong> {activity.activity}</p>
+              <p><strong>Participants:</strong> {activity.participants}</p>
             </div>
           )}
         </div>
