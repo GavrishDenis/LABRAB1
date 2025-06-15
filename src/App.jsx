@@ -1,72 +1,84 @@
-import React, { useEffect, useState } from "react";
-import ToDoForm from "./AddTask";
+import React, { useState, useEffect } from "react";
 import ToDo from "./Task";
+import ToDoForm from "./AddTask";
 import "./App.css";
 
 function App() {
-  const [todos, setTodos] = useState([]);
-  const [bitcoinPrice, setBitcoinPrice] = useState(null);
+  // Состояние для котика (url картинки)
+  const [catUrl, setCatUrl] = useState("");
+  // Состояние для факта о коте
   const [catFact, setCatFact] = useState("");
+  // Состояние для цены биткоина
+  const [btcPrice, setBtcPrice] = useState(null);
 
-  // Загрузка цены Bitcoin с CoinCap API
-  const fetchBitcoinPrice = async () => {
+  // Состояние для задач
+  const [todos, setTodos] = useState([]);
+
+  // Получить картинку котика
+  const fetchCatImage = async () => {
     try {
-      const response = await fetch("https://api.coincap.io/v2/assets/bitcoin");
-      const json = await response.json();
-      if (json.data && json.data.priceUsd) {
-        setBitcoinPrice(parseFloat(json.data.priceUsd).toFixed(2));
-      } else {
-        setBitcoinPrice("Ошибка получения цены");
-      }
+      // Картинки с placekitten.com, просто URL меняем для обновления
+      const width = 200 + Math.floor(Math.random() * 100);
+      const height = 300 + Math.floor(Math.random() * 100);
+      setCatUrl(`https://placekitten.com/${width}/${height}`);
     } catch (error) {
-      setBitcoinPrice("Ошибка подключения");
-      console.error("Ошибка API Bitcoin:", error);
+      console.error("Ошибка загрузки котика:", error);
     }
   };
 
-  // Загрузка факта о коте с meowfacts
+  // Получить факт о коте
   const fetchCatFact = async () => {
     try {
-      const response = await fetch("https://meowfacts.herokuapp.com/");
-      const json = await response.json();
-      if (json.data && json.data.length > 0) {
-        setCatFact(json.data[0]);
-      } else {
-        setCatFact("Нет данных");
-      }
+      const res = await fetch("https://meowfacts.herokuapp.com/");
+      const json = await res.json();
+      setCatFact(json.data[0]);
     } catch (error) {
-      setCatFact("Ошибка подключения");
-      console.error("Ошибка API котов:", error);
+      console.error("Ошибка загрузки факта о коте:", error);
+      setCatFact("Не удалось загрузить факт о коте");
     }
   };
 
+  // Получить цену биткоина (в рублях) из CoinGecko
+  const fetchBtcPrice = async () => {
+    try {
+      const res = await fetch(
+        "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=rub"
+      );
+      const json = await res.json();
+      setBtcPrice(json.bitcoin.rub);
+    } catch (error) {
+      console.error("Ошибка загрузки цены BTC:", error);
+      setBtcPrice(null);
+    }
+  };
+
+  // Загружаем данные при монтировании компонента
   useEffect(() => {
-    fetchBitcoinPrice();
+    fetchCatImage();
     fetchCatFact();
+    fetchBtcPrice();
   }, []);
 
-  // Добавление задачи
+  // Обработчики для задач
+
   const addTask = (userInput) => {
-    if (userInput) {
-      const newItem = {
-        id: Math.random().toString(36).substr(2, 9),
-        task: userInput,
-        complete: false,
-      };
-      setTodos([...todos, newItem]);
-    }
+    if (userInput.trim() === "") return;
+    const newItem = {
+      id: Math.random().toString(36).substr(2, 9),
+      task: userInput,
+      complete: false,
+    };
+    setTodos([...todos, newItem]);
   };
 
-  // Удаление задачи
   const removeTask = (id) => {
     setTodos(todos.filter((todo) => todo.id !== id));
   };
 
-  // Переключение статуса задачи
-  const handleToggle = (id) => {
+  const toggleTask = (id) => {
     setTodos(
-      todos.map((task) =>
-        task.id === id ? { ...task, complete: !task.complete } : task
+      todos.map((todo) =>
+        todo.id === id ? { ...todo, complete: !todo.complete } : todo
       )
     );
   };
@@ -74,35 +86,49 @@ function App() {
   return (
     <div className="App">
       <header>
-        <h1>Список задач: {todos.length}</h1>
+        <h1>React Приложение с котиками, Bitcoin и задачами</h1>
       </header>
 
-      <section className="info-section">
-        <div className="cat-fact">
-          <h2>Факт о коте:</h2>
-          <p>{catFact || "Загрузка..."}</p>
-          <button onClick={fetchCatFact}>Получить новый факт</button>
-        </div>
-
-        <div className="bitcoin-price">
-          <h2>Цена Bitcoin (USD):</h2>
-          <p>{bitcoinPrice !== null ? `$${bitcoinPrice}` : "Загрузка..."}</p>
-          <button onClick={fetchBitcoinPrice}>Обновить цену</button>
-        </div>
+      <section className="cat-section">
+        <h2>Котик 🐱</h2>
+        {catUrl && (
+          <img
+            src={catUrl}
+            alt="Котик"
+            style={{ maxWidth: "300px", borderRadius: "8px" }}
+          />
+        )}
+        <button onClick={fetchCatImage}>Поменять котика</button>
+        <p>{catFact}</p>
+        <button onClick={fetchCatFact}>Получить новый факт</button>
       </section>
 
-      <ToDoForm addTask={addTask} />
+      <section className="btc-section">
+        <h2>Цена Bitcoin (₽)</h2>
+        {btcPrice !== null ? (
+          <p style={{ fontSize: "1.5rem", fontWeight: "bold" }}>
+            {btcPrice.toLocaleString("ru-RU")} ₽
+          </p>
+        ) : (
+          <p>Загрузка...</p>
+        )}
+        <button onClick={fetchBtcPrice}>Обновить цену</button>
+      </section>
 
-      <div className="todo-list">
-        {todos.map((todo) => (
-          <ToDo
-            todo={todo}
-            key={todo.id}
-            toggleTask={handleToggle}
-            removeTask={removeTask}
-          />
-        ))}
-      </div>
+      <section className="todo-section">
+        <h2>Список задач: {todos.length}</h2>
+        <ToDoForm addTask={addTask} />
+        <div className="todo-list">
+          {todos.map((todo) => (
+            <ToDo
+              todo={todo}
+              key={todo.id}
+              toggleTask={toggleTask}
+              removeTask={removeTask}
+            />
+          ))}
+        </div>
+      </section>
     </div>
   );
 }
