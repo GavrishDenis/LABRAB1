@@ -38,11 +38,12 @@ header {
 
 header h1 {
   margin-bottom: 10px;
+  font-size: 2.2rem;
 }
 
 .subtitle {
   opacity: 0.9;
-  font-size: 0.9em;
+  font-size: 1.1rem;
 }
 
 .content {
@@ -63,6 +64,7 @@ h2 {
   margin-bottom: 20px;
   padding-bottom: 10px;
   border-bottom: 2px solid var(--gray);
+  font-size: 1.5rem;
 }
 
 .image-wrapper {
@@ -91,7 +93,21 @@ img {
 
 .activity-card h3 {
   color: var(--primary-dark);
-  margin-bottom: 10px;
+  margin-bottom: 15px;
+  font-size: 1.3rem;
+}
+
+.activity-details {
+  margin-top: 15px;
+}
+
+.activity-details p {
+  margin-bottom: 8px;
+}
+
+.activity-details span {
+  font-weight: 600;
+  color: var(--primary);
 }
 
 button {
@@ -101,10 +117,11 @@ button {
   padding: 12px 20px;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 16px;
+  font-size: 1rem;
   transition: all 0.3s;
   width: 100%;
   margin-top: 10px;
+  font-weight: 500;
 }
 
 button:hover {
@@ -120,22 +137,41 @@ button:disabled {
   box-shadow: none;
 }
 
-.loader, .error {
+.loader {
+  padding: 20px;
+  margin: 20px 0;
+  border-radius: 8px;
+  text-align: center;
+  background: rgba(0,0,0,0.03);
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(74, 118, 168, 0.2);
+  border-radius: 50%;
+  border-top-color: var(--primary);
+  margin: 0 auto 15px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.error {
   padding: 15px;
   margin: 15px 0;
   border-radius: 8px;
   text-align: center;
-}
-
-.loader {
-  background: rgba(0,0,0,0.05);
-  color: var(--dark);
-}
-
-.error {
   background: rgba(255,51,51,0.1);
   border-left: 4px solid var(--error);
   color: var(--error);
+}
+
+.error p:first-child {
+  font-weight: 600;
+  margin-bottom: 5px;
 }
 
 @media (max-width: 768px) {
@@ -145,5 +181,9 @@ button:disabled {
   
   header {
     padding: 20px;
+  }
+  
+  header h1 {
+    font-size: 1.8rem;
   }
 }
